@@ -7,7 +7,7 @@ Shader "cg/TestNormal"
 	{
 		Pass 
 		{
-			Cull 	Back
+			Cull Back
 
 			CGPROGRAM
 			#pragma exclude_renderers d3d11 xbox360
@@ -18,15 +18,17 @@ Shader "cg/TestNormal"
 
 			struct v2f
 			{
-				float4	position	: POSITION;
-				float3	worldNormal;
+				float4	position	: POSITION;		// POSITION与SV_POSITION应该是一样的
+				float3  viewDir 	: TEXCOORD0;
+				float3	worldNormal : TEXCOORD1;	// 这个之所以编译错误, 是因为没有绑定到TEXCOORD1
 			};
 
 			v2f vert(appdata_base input)
 			{
 				v2f output;
 				output.position		= UnityObjectToClipPos(input.vertex);
-				output.worldNormal	= normalize(float3(mul(float4(input.normal, 0), unity_WorldToObject)));
+				output.viewDir		= normalize(WorldSpaceViewDir(input.vertex));
+				output.worldNormal	= UnityObjectToWorldNormal(input.normal);
 
 				return output;
 			}

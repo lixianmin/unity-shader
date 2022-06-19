@@ -24,7 +24,7 @@ Shader "cg/Anisotropic"
 	{
 		Tags
 		{
-			"Queue"				="Geometry" 
+			"Queue"				= "Geometry" 
 			"IgnoreProjector"	= "True"
 			"RenderType"		= "Opaque"
 		}
@@ -43,10 +43,10 @@ Shader "cg/Anisotropic"
 
 		struct v2f
 		{
-			float4	position	: POSITION;
-			float3	worldPosition;
-			float3	worldNormal;
-			float3	worldTangent;
+			float4	position		: POSITION;
+			float3	worldPosition	: TEXCOORD0;
+			float3	worldNormal 	: NORMAL;
+			float3	worldTangent	: TANGENT;
 		};
 
 		v2f vert(appdata_tan input)
@@ -54,8 +54,8 @@ Shader "cg/Anisotropic"
 			v2f output;
 			output.position		= UnityObjectToClipPos(input.vertex);
 			output.worldPosition= mul(unity_ObjectToWorld, input.vertex).xyz;
-			output.worldNormal	= normalize(float3(mul(float4(input.normal, 0), unity_WorldToObject)));
-			output.worldTangent	= normalize(float3(mul(unity_ObjectToWorld, input.tangent)));
+			output.worldNormal	= UnityObjectToWorldNormal(input.normal);
+			output.worldTangent	= UnityObjectToWorldDir(input.tangent.xyz);
 
 			return output;
 		}
@@ -68,7 +68,7 @@ Shader "cg/Anisotropic"
 			half	dotNL		= dot(N, L);
 			half4	diffuse		= 2.0 * _Color * (usingAmbient * UNITY_LIGHTMODEL_AMBIENT + attenuation * _LightColor0 * max(0, dotNL));
 
-			half4	specular	= half4(0);
+			half4	specular	= half4(0, 0, 0, 0); // 这个玩意现在只能支持4个参数了
 			if(dotNL > 0)
 			{
 				half dotNH		= dot(N, H);

@@ -21,120 +21,120 @@ Shader "cg/FresnelHighlight"
 		_MainTex("Base (RGB) Glass (A)", 2D)		= "white" {}
 	}
 
-	SubShader
-	{
-		Tags
-		{
-			"Queue"				="Geometry" 
-			"IgnoreProjector"	= "True"
-			"RenderType"		= "Opaque"
-		}
+	// SubShader
+	// {
+	// 	Tags
+	// 	{
+	// 		"Queue"				="Geometry" 
+	// 		"IgnoreProjector"	= "True"
+	// 		"RenderType"		= "Opaque"
+	// 	}
 
-		LOD	300
+	// 	LOD	300
 
-		CGINCLUDE
-		#pragma exclude_renderers d3d11 xbox360
-		#pragma fragmentoption ARB_precision_hint_fastest
+	// 	CGINCLUDE
+	// 	#pragma exclude_renderers d3d11 xbox360
+	// 	#pragma fragmentoption ARB_precision_hint_fastest
 
-		#include "../basic.cginc"
+	// 	#include "../basic.cginc"
 
-		float4		_Color;
-		float		_Shininess;
-		float		_FresnelFactor;
-		sampler2D	_MainTex;
-		float4		_MainTex_ST;
+	// 	float4		_Color;
+	// 	float		_Shininess;
+	// 	float		_FresnelFactor;
+	// 	sampler2D	_MainTex;
+	// 	float4		_MainTex_ST;
 
-		struct v2f
-		{
-			float4	position	: POSITION;
-			float2	texcoord	: TEXCOORD0;
-			float3	worldPosition;
-			float3	worldNormal;
-		};
+	// 	struct v2f
+	// 	{
+	// 		float4	position	: POSITION;
+	// 		float2	texcoord	: TEXCOORD0;
+	// 		float3	worldPosition;
+	// 		float3	worldNormal;
+	// 	};
 
-		v2f vert(appdata_base input)
-		{
-			v2f output;
-			output.position		= UnityObjectToClipPos(input.vertex);
-			output.texcoord		= TRANSFORM_TEX(input.texcoord, _MainTex);
-			output.worldPosition= mul(unity_ObjectToWorld, input.vertex).xyz;
-			output.worldNormal	= normalize(float3(mul(float4(input.normal, 0), unity_WorldToObject)));
+	// 	v2f vert(appdata_base input)
+	// 	{
+	// 		v2f output;
+	// 		output.position		= UnityObjectToClipPos(input.vertex);
+	// 		output.texcoord		= TRANSFORM_TEX(input.texcoord, _MainTex);
+	// 		output.worldPosition= mul(unity_ObjectToWorld, input.vertex).xyz;
+	// 		output.worldNormal	= normalize(UnityObjectToWorldNormal(input.normal));
 
-			return output;
-		}
+	// 		return output;
+	// 	}
 
-		float4 common_fragment(v2f input, bool usingAmbient)
-		{
-			CREATE_LIGHTING_VARIABLES(input.worldPosition, input.worldNormal);
-			float	dotNL		= dot(N, L);
-			float4	diffuse		= 2.0 * _Color * (usingAmbient * UNITY_LIGHTMODEL_AMBIENT + attenuation * _LightColor0 * max(0, dotNL));
+	// 	float4 common_fragment(v2f input, bool usingAmbient)
+	// 	{
+	// 		// CREATE_LIGHTING_VARIABLES(input.worldPosition, input.worldNormal);
+	// 		// float	dotNL		= dot(N, L);
+	// 		// float4	diffuse		= 2.0 * _Color * (usingAmbient * UNITY_LIGHTMODEL_AMBIENT + attenuation * _LightColor0 * max(0, dotNL));
+	// 		float4	diffuse		= float4(0);
+	// 		float4	specular	= float4(0);
+	// 		// if(dotNL > 0)
+	// 		// {
+	// 		// 	// float w	= pow(1.0 - max(0, dot(H, V)), 5);
+	// 		// 	float w	= pow(1.0 - dot(H, V), _FresnelFactor * 10);
+    //         //  	specular= attenuation * _LightColor0 * lerp(_SpecColor, 1.0, w) 
+	// 		// 		* pow(max(0.0, dot(reflect(-L, N), V)), _Shininess * 128);
+	// 		// }
 
-			float4	specular	= float4(0);
-			if(dotNL > 0)
-			{
-				// float w	= pow(1.0 - max(0, dot(H, V)), 5);
-				float w	= pow(1.0 - dot(H, V), _FresnelFactor * 10);
-             	specular= attenuation * _LightColor0 * lerp(_SpecColor, 1.0, w) 
-					* pow(max(0.0, dot(reflect(-L, N), V)), _Shininess * 128);
-			}
+	// 		float4	baseColor	= tex2D(_MainTex, input.texcoord);
+	// 		float4	output		= baseColor * diffuse + specular;
+	// 		// output.a			= 1.0;
+	// 		return output;
+	// 	}
 
-			float4	baseColor	= tex2D(_MainTex, input.texcoord);
-			float4	output		= baseColor * diffuse + specular;
-			// output.a			= 1.0;
-			return output;
-		}
+	// 	ENDCG
 
-		ENDCG
+	// 	Pass 
+	// 	{
+	// 		Name "FORWARDBASE"
 
-		Pass 
-		{
-			Name "FORWARDBASE"
+	// 		Tags 	
+	// 		{ 
+	// 			"LightMode"	= "ForwardBase" // pass for 4 vertex lights, ambient light & first pixel light
+	// 		}
 
-			Tags 	
-			{ 
-				"LightMode"	= "ForwardBase" // pass for 4 vertex lights, ambient light & first pixel light
-			}
+	// 		Cull 	Back
 
-			Cull 	Back
+	// 		CGPROGRAM
+	// 		#pragma multi_compile_fwdbase 
 
-			CGPROGRAM
-			#pragma multi_compile_fwdbase 
+	// 		#pragma vertex vert 
+	// 		#pragma fragment frag
 
-			#pragma vertex vert 
-			#pragma fragment frag
+	// 		float4 frag(v2f input):COLOR
+	// 		{
+	// 			return common_fragment(input, true);
+	// 		}
 
-			float4 frag(v2f input):COLOR
-			{
-				return common_fragment(input, true);
-			}
+	// 		ENDCG
+	// 	}
 
-			ENDCG
-		}
+	// 	Pass 
+	// 	{
+	// 		Name "FORWARDADD"
+	// 		Tags
+	// 		{ 
+	// 			"LightMode"	= "ForwardAdd" 
+	// 		}
 
-		Pass 
-		{
-			Name "FORWARDADD"
-			Tags
-			{ 
-				"LightMode"	= "ForwardAdd" 
-			}
+	// 		Cull 	Back
+	// 		Blend	One	One
 
-			Cull 	Back
-			Blend	One	One
+	// 		CGPROGRAM
 
-			CGPROGRAM
+	// 		#pragma vertex vert 
+	// 		#pragma fragment frag
 
-			#pragma vertex vert 
-			#pragma fragment frag
+	// 		float4 frag(v2f input):COLOR
+	// 		{
+	// 			return common_fragment(input, false);
+	// 		}
 
-			float4 frag(v2f input):COLOR
-			{
-				return common_fragment(input, false);
-			}
-
-			ENDCG
-		}
-	}
+	// 		ENDCG
+	// 	}
+	// }
 
 	Fallback Off
 }
