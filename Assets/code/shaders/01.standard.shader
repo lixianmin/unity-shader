@@ -5,6 +5,7 @@ Shader "study/01.standard"
 	{
 		_Color ("Color", Color) = (1,1,1,1)
         _MainTex ("Albedo (RGB)", 2D) = "white" {}
+		_Bumpiness ("Bumpiness", Range(-2, 2)) = 1
 		[NoScaleOffset]_Normal ("Normal", 2D) = "bump" {}
 		[NoScaleOffset]_AO ("Ambient Occlusion", 2D) = "white" {}
 
@@ -33,24 +34,28 @@ Shader "study/01.standard"
 		sampler2D _AO;
 
 
-		half _Glossiness;
-		half _Metallic;
-		fixed4 _Color;
+		fixed4	_Color;
+		half	_Bumpiness;
+		half 	_Glossiness;
+		half 	_Metallic;
+		
 
 		// Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
-       // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
-       // #pragma instancing_options assumeuniformscaling
-       UNITY_INSTANCING_BUFFER_START(Props)
-       // put more per-instance properties here
-       UNITY_INSTANCING_BUFFER_END(Props)
+        // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
+        // #pragma instancing_options assumeuniformscaling
+        UNITY_INSTANCING_BUFFER_START(Props)
+        // put more per-instance properties here
+        UNITY_INSTANCING_BUFFER_END(Props)
 
+		// SurfaceOutputStandard = ONE + SOA
 		void surf(Input input , inout SurfaceOutputStandard output)
 		{
-            fixed4 c = tex2D(_MainTex, input.uv_MainTex) * _Color;
-            output.Albedo = c.rgb;
+            fixed4 c = tex2D(_MainTex, input.uv_MainTex) * _Color; // 讲道理每一个texture都有一个乘参
+            output.Albedo = c.rgb;	//  albedo与alpha是一对, 加起来恰好是一个float4, 因此albedo是rgb
 			output.Alpha = c.a;
 
-			output.Normal = UnpackNormal(tex2D(_Normal, input.uv_MainTex));
+			// tangent空间法线
+			output.Normal = UnpackScaleNormal(tex2D(_Normal, input.uv_MainTex), _Bumpiness);
 
             // Metallic and smoothness come from slider variables
             output.Metallic = _Metallic;
