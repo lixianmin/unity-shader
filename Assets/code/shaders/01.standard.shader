@@ -6,6 +6,7 @@ Shader "study/01.standard"
 		_Color ("Color", Color) = (1,1,1,1)
         _MainTex ("Albedo (RGB)", 2D) = "white" {}
 		[NoScaleOffset]_Normal ("Normal", 2D) = "bump" {}
+		[NoScaleOffset]_AO ("Ambient Occlusion", 2D) = "white" {}
 
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic ("Metallic", Range(0,1)) = 0.0
@@ -29,6 +30,8 @@ Shader "study/01.standard"
 
 		sampler2D _MainTex;
 		sampler2D _Normal;
+		sampler2D _AO;
+
 
 		half _Glossiness;
 		half _Metallic;
@@ -52,6 +55,7 @@ Shader "study/01.standard"
             // Metallic and smoothness come from slider variables
             output.Metallic = _Metallic;
             output.Smoothness = _Glossiness;
+			output.Occlusion = tex2D(_AO, input.uv_MainTex);
 		}
 
 		ENDCG
