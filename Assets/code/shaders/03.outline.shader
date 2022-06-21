@@ -1,13 +1,12 @@
 
-Shader "study/02.xray"
+Shader "study/03.outline"
 {
 	Properties
 	{
-		[Header(The Blocked Part)]
+		[Header(The Outline Part)]
         [Space(10)]
-        _XRayColor ("X-Ray Color", Color) = (0,1,1,1)
-        _XRayWidth ("X-Ray Width", Range(1, 2)) = 1
-        _XRayBrightness ("X-Ray Brightness",Range(0, 2)) = 1
+        _OutlineColor ("Outline Color", Color) = (0,1,1,1)
+        _OutlineWidth ("Outline Width", Range(0, 0.1)) = 0.01
 
 		[Header(The Normal Part)]
         [Space(10)]
@@ -25,17 +24,15 @@ Shader "study/02.xray"
 
 	SubShader
 	{
-		Tags{ "RenderType" = "Opaque"  "Queue" = "Geometry" }
+		Tags{ "RenderType" = "Opaque"  "Queue" = "Geometry+10" }
 		Cull Back
 
-		//---------- The Blocked Part ----------
+		//---------- The Outline Part ----------
 		// 可以在surface shader之外单独加一个pass
         Pass
         {
-            ZTest Greater
-            ZWrite Off
-
-            Blend SrcAlpha OneMinusSrcAlpha
+            ZTest LEqual    // 保持正确的渲染顺序
+            ZWrite Off      // 这个必须是off, 如果是On则物体本身就会被遮挡住. 但ZWrite关闭的话, 轮廓线就会被其它物体遮挡, 解决的办法就是调整Queue=Geometry+100s  
 
             CGPROGRAM
             #pragma vertex vert
@@ -44,36 +41,24 @@ Shader "study/02.xray"
 
             struct v2f
             {
-                float4 vertex		: POSITION;
-                float3 viewDir 		: TEXCOORD0;
-                float3 worldNormal 	: NORMAL;
+                float4 vertex : POSITION;
             };
 
-            fixed4 	_XRayColor;
-            fixed 	_XRayWidth;
-            half 	_XRayBrightness;
+            fixed   _OutlineWidth;
+            fixed4  _OutlineColor;
 
             v2f vert(appdata_base v)
             {
+                // 在Object坐标系中延法线方向延长vertex, 不能在world坐标系中延长, 原因是world坐标系的原点在很远的地方啊
                 v2f o;
+                v.vertex.xyz += v.normal * _OutlineWidth;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.viewDir = normalize(WorldSpaceViewDir(v.vertex));
-                o.worldNormal = UnityObjectToWorldNormal(v.normal);
-
                 return o;
             }
-
+        
             fixed4 frag(v2f i) : SV_Target
             {
-                // Fresnel算法
-                half nv = saturate(dot(i.worldNormal, i.viewDir));
-                nv = pow(1 - nv, _XRayWidth) * _XRayBrightness;
-
-                fixed4 color;
-                color.rgb = _XRayColor.rgb;
-                color.a = nv;
-
-                return color;
+                return _OutlineColor;
             }
 
             ENDCG

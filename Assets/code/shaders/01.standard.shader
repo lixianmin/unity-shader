@@ -15,7 +15,7 @@ Shader "study/01.standard"
 		[NoScaleOffset]_AmbientOcclusion ("Ambient Occlusion", 2D) = "white" {}	// 环境光遮挡, 控制物体对间接照明的接受程度
 
         _Glossiness ("Smoothness", Range(0,1)) = 0.5	// 光滑度
-        [Gamma]_Metallic ("Metallic", Range(0,1)) = 0.0		// 金属质感
+        [Gamma]_Metallic ("Metallic", Range(0,1)) = 0.0	// 金属质感
 	}
 
 	SubShader
@@ -42,7 +42,6 @@ Shader "study/01.standard"
 		fixed 		_Ambient;
 		sampler2D 	_AmbientOcclusion;
 
-		
 		half 		_Glossiness;
 		half 		_Metallic;
 		
