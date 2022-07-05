@@ -5,6 +5,23 @@ Shader "core/urp/01.standard"
 	{
 		[MainColor] _BaseColor ("Color", Color) = (1,1,1,1)
         [MainTexture] _BaseMap ("Albedo", 2D) = "white" {}
+
+        // _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
+
+        // _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
+        // _SmoothnessTextureChannel("Smoothness texture channel", Float) = 0
+
+        // _Metallic("Metallic", Range(0.0, 1.0)) = 0.0
+        // _MetallicGlossMap("Metallic", 2D) = "white" {}
+
+        // _SpecColor("Specular", Color) = (0.2, 0.2, 0.2)
+        // _SpecGlossMap("Specular", 2D) = "white" {}
+
+        // [ToggleOff] _SpecularHighlights("Specular Highlights", Float) = 1.0
+        // [ToggleOff] _EnvironmentReflections("Environment Reflections", Float) = 1.0
+
+        _BumpScale("Scale", Float) = 1.0
+        _BumpMap("Normal Map", 2D) = "bump" {}
 	}
 
 	SubShader
@@ -14,7 +31,7 @@ Shader "core/urp/01.standard"
 
         Pass
         {
-            Tags {"LightMode" = "UniversalForward"}
+            Tags {"LightMode" = "UniversalForward"} 
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -26,37 +43,55 @@ Shader "core/urp/01.standard"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"            
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            // #include "Packages/com.unity.render-pipelines.universal/Shaders/LitForwardPass.hlsl"
 
 
             struct Attributes
             {
                 float4 positionOS   : POSITION;
+                float3 normalTS     : NORMAL;
                 float2 uv           : TEXCOORD0;
+                
             };
 
             struct Varyings
             {
                 float4 positionHCS  : SV_POSITION;
-                float3 positionWS   : TEXCOORD1;
-                float2 uv           : TEXCOORD0;
+                float4 positionOS   : TEXCOORD0;
+                float3 normalWS     : TEXCOORD1;
+                float2 uv           : TEXCOORD2;
             };
 
-            TEXTURE2D(_BaseMap);
-            SAMPLER(sampler_BaseMap);
+            // TEXTURE2D(_BaseMap);
+            // SAMPLER(sampler_BaseMap);
 
             CBUFFER_START(UnityPerMaterial)
-                float4  _BaseMap_ST;
-                half4   _BaseColor;
+                // float4  _BaseMap_ST;
+                // half4   _BaseColor;
             CBUFFER_END
+
+
+            // Copied from Unity built-in shader v2018.3
+            float3 UnpackScaleNormal(float4 packednormal, float scale)
+            {
+            #ifndef UNITY_NO_DXT5nm
+                // Unpack normal as DXT5nm (1, y, 1, x) or BC5 (x, y, 0, 1)
+                // Note neutral texture like "bump" is (0, 0, 1, 1) to work with both plain RGB normal and DXT5nm/BC5
+                packednormal.x *= packednormal.w;
+            #endif
+                float3 normal;
+                normal.xy = (packednormal.xy * 2 - 1) * scale;
+                normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
+                return normal;
+            }
 
             Varyings vert(Attributes input)
             {
                 Varyings output;
-                // output.positionHCS = TransformObjectToHClip(input.positionOS.xyz);
-                 // GetVertexPositionInputs computes position in different spaces (ViewSpace, WorldSpace, Homogeneous Clip Space)
-                VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
-                output.positionHCS = positionInputs.positionCS;
-                output.positionWS = positionInputs.positionWS;
+                output.positionHCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.positionOS = input.positionOS;
+                output.normalWS = TransformObjectToWorldNormal(input.normalTS);
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
 
                 return output;
@@ -64,12 +99,33 @@ Shader "core/urp/01.standard"
 
             half4 frag(Varyings input): SV_Target 
             {
-                // shadowCoord is position in shadow light space
-                float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
-                Light mainLight = GetMainLight(shadowCoord);
+                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS);
 
-                half4 color = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
-                color *= mainLight.shadowAttenuation;
+                SurfaceData surfaceData;
+                InitializeStandardLitSurfaceData(input.uv, surfaceData);
+
+                BRDFData brdfData;
+                InitializeBRDFData(surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.alpha, brdfData);
+
+
+                half3 normalWS = UnpackScaleNormal(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, input.uv), _BumpScale);
+                // normalWS = input.normalWS;
+                half3 bakedGI = SampleSH(normalWS);
+
+                Light mainLight = GetMainLight(GetShadowCoord(vertexInput));
+                half3 viewDirectionWS = SafeNormalize(GetCameraPositionWS() - vertexInput.positionWS.xyz);
+               
+                half4 color = half4(0, 0, 0, 1);                 
+                color.rgb = GlobalIllumination(brdfData, bakedGI, 1, normalWS, viewDirectionWS);
+                color.rgb += LightingPhysicallyBased(brdfData, mainLight, normalWS, viewDirectionWS);
+
+                // shadowCoord is position in shadow light space
+                // half3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                // float4 shadowCoord = TransformWorldToShadowCoord(positionWS); 
+                // Light mainLight = GetMainLight(shadowCoord);
+
+                // half4 color = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
+                // color *= mainLight.shadowAttenuation;
                 return color;
             }
 
@@ -81,5 +137,6 @@ Shader "core/urp/01.standard"
         // as the ShadowCaster pass from Lit shader is using a different UnityPerMaterial CBUFFER. 
         // Maybe we should add a DECLARE_PASS macro that allows to user to inform the UnityPerMaterial CBUFFER to use?
         UsePass "Universal Render Pipeline/Lit/ShadowCaster"
+        UsePass "Universal Render Pipeline/Lit/DepthOnly"
 	}
 }
