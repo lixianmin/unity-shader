@@ -1,5 +1,5 @@
 
-Shader "core/03.outline"
+Shader "core/normal/03.outline"
 {
 	Properties
 	{

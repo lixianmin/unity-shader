@@ -1,5 +1,5 @@
 
-Shader "core/02.xray"
+Shader "core/normal/02.xray"
 {
 	Properties
 	{

@@ -1,5 +1,5 @@
 
-Shader "core/04.tessellate"
+Shader "core/normal/04.tessellate"
 {
 	Properties
 	{

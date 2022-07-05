@@ -1,5 +1,5 @@
 
-Shader "core/01.standard"
+Shader "core/normal/01.standard"
 {
 	Properties
 	{
