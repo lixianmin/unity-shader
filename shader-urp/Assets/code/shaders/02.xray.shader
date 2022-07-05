@@ -49,8 +49,8 @@ Shader "core/02.xray"
                 float3 worldNormal 	: NORMAL;
             };
 
-            fixed4 	_XRayColor;
-            fixed 	_XRayWidth;
+            half4 	_XRayColor;
+            half 	_XRayWidth;
             half 	_XRayBrightness;
 
             v2f vert(appdata_base v)
@@ -63,13 +63,13 @@ Shader "core/02.xray"
                 return o;
             }
 
-            fixed4 frag(v2f i) : SV_Target
+            half4 frag(v2f i) : SV_Target
             {
                 // Fresnel算法
                 half nv = saturate(dot(i.worldNormal, i.viewDir));
                 nv = pow(1 - nv, _XRayWidth) * _XRayBrightness;
 
-                fixed4 color;
+                half4 color;
                 color.rgb = _XRayColor.rgb;
                 color.a = nv;
 
@@ -90,11 +90,11 @@ Shader "core/02.xray"
 			float2 uv_Albedo;
 		};
 
-		fixed4		_AlbedoColor;
+		half4		_AlbedoColor;
 		sampler2D	_Albedo;
 		half		_Bumpiness;
 		sampler2D 	_Normal;
-		fixed4 		_EmissionColor;
+		half4 		_EmissionColor;
 		sampler2D 	_Emission;
 
 		half _Glossiness;
@@ -104,7 +104,7 @@ Shader "core/02.xray"
 		void surf(Input input , inout SurfaceOutputStandard output)
 		{
             // ONE
-            fixed4 c = tex2D(_Albedo, input.uv_Albedo) * _AlbedoColor; // 讲道理每一个texture都有一个乘参
+            half4 c = tex2D(_Albedo, input.uv_Albedo) * _AlbedoColor; // 讲道理每一个texture都有一个乘参
             output.Albedo = c.rgb;	//  albedo与alpha是一对, 加起来恰好是一个float4, 因此albedo是rgb
 			output.Alpha = c.a;
 			

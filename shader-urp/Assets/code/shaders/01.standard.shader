@@ -32,14 +32,14 @@ Shader "core/01.standard"
 			float2 uv_Albedo;
 		};
 
-		fixed4		_AlbedoColor;
+		half4		_AlbedoColor;
 		sampler2D	_Albedo;
 		half		_Bumpiness;
 		sampler2D 	_Normal;
-		fixed4 		_EmissionColor;
+		half4 		_EmissionColor;
 		sampler2D 	_Emission;
 		
-		fixed 		_Ambient;
+		half 		_Ambient;
 		sampler2D 	_AmbientOcclusion;
 
 		half 		_Glossiness;
@@ -57,7 +57,7 @@ Shader "core/01.standard"
 		void surf(Input input , inout SurfaceOutputStandard output)
 		{
 			// ONE
-            fixed4 c = tex2D(_Albedo, input.uv_Albedo) * _AlbedoColor; // 讲道理每一个texture都有一个乘参
+            half4 c = tex2D(_Albedo, input.uv_Albedo) * _AlbedoColor; // 讲道理每一个texture都有一个乘参
             output.Albedo = c.rgb;	//  albedo与alpha是一对, 加起来恰好是一个float4, 因此albedo是rgb
 			output.Alpha = c.a;
 			
@@ -69,7 +69,7 @@ Shader "core/01.standard"
 			// 光滑度 0:完全粗糙, 1:完全光滑
             output.Smoothness = _Glossiness;
 			// 环境光遮挡 0:完全接受光照, 1:完全使用AO贴图
-			output.Occlusion = lerp(fixed4( 1,1,1,1), tex2D(_AmbientOcclusion, input.uv_Albedo), _Ambient).r;
+			output.Occlusion = lerp(half4( 1,1,1,1), tex2D(_AmbientOcclusion, input.uv_Albedo), _Ambient).r;
 
 			// 金属度 0:完全粗糙, 1:完全金属
 			output.Metallic = _Metallic;

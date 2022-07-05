@@ -44,8 +44,8 @@ Shader "core/03.outline"
                 float4 vertex : POSITION;
             };
 
-            fixed   _OutlineWidth;
-            fixed4  _OutlineColor;
+            half   _OutlineWidth;
+            half4  _OutlineColor;
 
             v2f vert(appdata_base v)
             {
@@ -56,7 +56,7 @@ Shader "core/03.outline"
                 return o;
             }
         
-            fixed4 frag(v2f i) : SV_Target
+            half4 frag(v2f i) : SV_Target
             {
                 return _OutlineColor;
             }
@@ -75,11 +75,11 @@ Shader "core/03.outline"
 			float2 uv_Albedo;
 		};
 
-		fixed4		_AlbedoColor;
+		half4		_AlbedoColor;
 		sampler2D	_Albedo;
 		half		_Bumpiness;
 		sampler2D 	_Normal;
-		fixed4 		_EmissionColor;
+		half4 		_EmissionColor;
 		sampler2D 	_Emission;
 
 		half _Glossiness;
@@ -89,7 +89,7 @@ Shader "core/03.outline"
 		void surf(Input input , inout SurfaceOutputStandard output)
 		{
             // ONE
-            fixed4 c = tex2D(_Albedo, input.uv_Albedo) * _AlbedoColor; // 讲道理每一个texture都有一个乘参
+            half4 c = tex2D(_Albedo, input.uv_Albedo) * _AlbedoColor; // 讲道理每一个texture都有一个乘参
             output.Albedo = c.rgb;	//  albedo与alpha是一对, 加起来恰好是一个float4, 因此albedo是rgb
 			output.Alpha = c.a;
 			
