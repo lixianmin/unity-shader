@@ -38,7 +38,7 @@ Shader "projector/LookAtLight"
 			struct v2f
 			{
 				float4 position		: SV_POSITION;
-				float4 test;
+				float4 test			: TEXCOORD0;
 			};
 
 			v2f vert(float4 vertex : POSITION) 

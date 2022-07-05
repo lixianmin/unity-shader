@@ -35,7 +35,7 @@ Shader "cg/image/X Ray2"
 		{
 			float4	position	: POSITION;
 			float2	texcoord	: TEXCOORD0;
-			float	eyeDepth;	
+			float	eyeDepth	: TEXCOORD1;	
 		};
 
 		v2f vert(appdata_base v)
