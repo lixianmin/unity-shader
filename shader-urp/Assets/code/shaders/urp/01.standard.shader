@@ -31,21 +31,55 @@ Shader "core/urp/01.standard"
 
         Pass
         {
+            Name "ForwardLit"
             Tags {"LightMode" = "UniversalForward"} 
 
             HLSLPROGRAM
             
             // -------------------------------------
             // Material Keywords
+            // -------------------------------------
+            // Material Keywords
             #pragma shader_feature_local _NORMALMAP
+            // #pragma shader_feature_local _PARALLAXMAP
+            // #pragma shader_feature_local _RECEIVE_SHADOWS_OFF
+            // #pragma shader_feature_local _ _DETAIL_MULX2 _DETAIL_SCALED
+            // #pragma shader_feature_local_fragment _SURFACE_TYPE_TRANSPARENT
+            // #pragma shader_feature_local_fragment _ALPHATEST_ON
+            // #pragma shader_feature_local_fragment _ _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON
+            // #pragma shader_feature_local_fragment _EMISSION
+            // #pragma shader_feature_local_fragment _METALLICSPECGLOSSMAP
+            // #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+            // #pragma shader_feature_local_fragment _OCCLUSIONMAP
+            // #pragma shader_feature_local_fragment _SPECULARHIGHLIGHTS_OFF
+            // #pragma shader_feature_local_fragment _ENVIRONMENTREFLECTIONS_OFF
+            // #pragma shader_feature_local_fragment _SPECULAR_SETUP
 
+            // -------------------------------------
+            // Universal Pipeline keywords
+            // #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            // #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            // #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            // #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+            // #pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
+            // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            // #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            // #pragma multi_compile_fragment _ _LIGHT_LAYERS
+            // #pragma multi_compile_fragment _ _LIGHT_COOKIES
+            // #pragma multi_compile _ _CLUSTERED_RENDERING
+
+            // // -------------------------------------
+            // // Unity defined keywords
+            // #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
+            // #pragma multi_compile _ SHADOWS_SHADOWMASK
+            // #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            // #pragma multi_compile _ LIGHTMAP_ON
+            // #pragma multi_compile_fog
+            // #pragma multi_compile_fragment _ DEBUG_DISPLAY
 
             #pragma vertex vert
             #pragma fragment frag
-
-            // #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
-            // #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
-            // #pragma multi_compile _ _SHADOWS_SOFT
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"            
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -68,6 +102,7 @@ Shader "core/urp/01.standard"
                 float3 positionWS   : TEXCOORD1;
                 float3 normalWS     : TEXCOORD2;
                 half4 tangentWS     : TEXCOORD3;    // xyz: tangent, w: sign
+                half4 fogFactorAndVertexLight   : TEXCOORD5; // x: fogFactor, yzw: vertex light
             };
 
             // TEXTURE2D(_BaseMap);
@@ -105,16 +140,14 @@ Shader "core/urp/01.standard"
 
                 inputData.tangentToWorld = tangentToWorld;
                 inputData.normalWS = TransformTangentToWorld(normalTS, tangentToWorld);
-          
-
                 inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
                 inputData.viewDirectionWS = viewDirWS;
 
                 inputData.shadowCoord = TransformWorldToShadowCoord(inputData.positionWS);
 
             // #ifdef _ADDITIONAL_LIGHTS_VERTEX
-            //     inputData.fogCoord = InitializeInputDataFog(float4(input.positionWS, 1.0), input.fogFactorAndVertexLight.x);
-            //     inputData.vertexLighting = input.fogFactorAndVertexLight.yzw;
+                inputData.fogCoord = InitializeInputDataFog(float4(input.positionWS, 1.0), input.fogFactorAndVertexLight.x);
+                inputData.vertexLighting = input.fogFactorAndVertexLight.yzw;
             // #else
             //     inputData.fogCoord = InitializeInputDataFog(float4(input.positionWS, 1.0), input.fogFactor);
             // #endif
@@ -155,6 +188,13 @@ Shader "core/urp/01.standard"
                 half4 tangentWS = half4(normalInput.tangentWS.xyz, sign);
                 output.tangentWS = tangentWS;
 
+                half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);
+                half fogFactor = 0;
+                #if !defined(_FOG_FRAGMENT)
+                    fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
+                #endif
+                output.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
+
                 return output;
             }
 
@@ -169,34 +209,6 @@ Shader "core/urp/01.standard"
                 half4 color = UniversalFragmentPBR(inputData, surfaceData);
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
 
-                // // normal can not be adjuested on mobile platform
-                // float sgn = input.tangentWS.w;      // should be either +1 or -1
-                // float3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
-                // half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz);
-                // half3 normalWS = TransformTangentToWorld(surfaceData.normalTS, tangentToWorld);
-
-                // BRDFData brdfData;
-                // InitializeBRDFData(surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.alpha, brdfData);
-
-
-                // half3 bakedGI = SampleSH(normalWS);
-
-                // float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS); 
-                // Light mainLight = GetMainLight(shadowCoord);
-               
-                // half4 color = half4(0, 0, 0, 1);                 
-                // color.rgb = GlobalIllumination(brdfData, bakedGI, 1, normalWS, input.viewDirWS);
-                // color.rgb += LightingPhysicallyBased(brdfData, mainLight, normalWS, input.viewDirWS);
-
-
-
-                // shadowCoord is position in shadow light space
-                // half3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                // float4 shadowCoord = TransformWorldToShadowCoord(positionWS); 
-                // Light mainLight = GetMainLight(shadowCoord);
-
-                // half4 color = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
-                // color *= mainLight.shadowAttenuation;
                 return color;
             }
 
@@ -209,5 +221,7 @@ Shader "core/urp/01.standard"
         // Maybe we should add a DECLARE_PASS macro that allows to user to inform the UnityPerMaterial CBUFFER to use?
         UsePass "Universal Render Pipeline/Lit/ShadowCaster"
         UsePass "Universal Render Pipeline/Lit/DepthOnly"
+        // UsePass "Universal Render Pipeline/Lit/DepthNormals"
+        // UsePass "Universal Render Pipeline/Lit/GBuffer"
 	}
 }
