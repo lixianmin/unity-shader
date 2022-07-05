@@ -8,10 +8,10 @@ Shader "core/urp/01.standard"
 
         // _Cutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 
-        // _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
+        _Smoothness("Smoothness", Range(0.0, 1.0)) = 0.5
         // _SmoothnessTextureChannel("Smoothness texture channel", Float) = 0
 
-        // _Metallic("Metallic", Range(0.0, 1.0)) = 0.0
+        _Metallic("Metallic", Range(0.0, 1.0)) = 0.0
         // _MetallicGlossMap("Metallic", 2D) = "white" {}
 
         // _SpecColor("Specular", Color) = (0.2, 0.2, 0.2)
@@ -20,8 +20,8 @@ Shader "core/urp/01.standard"
         // [ToggleOff] _SpecularHighlights("Specular Highlights", Float) = 1.0
         // [ToggleOff] _EnvironmentReflections("Environment Reflections", Float) = 1.0
 
-        _BumpScale("Scale", Float) = 1.0
-        _BumpMap("Normal Map", 2D) = "bump" {}
+        _BumpScale("Bump Scale", Float) = 1.0
+        [NoScaleOffset] _BumpMap("Bump Map", 2D) = "bump" {}
 	}
 
 	SubShader
@@ -68,7 +68,6 @@ Shader "core/urp/01.standard"
                 float3 positionWS   : TEXCOORD1;
                 float3 normalWS     : TEXCOORD2;
                 half4 tangentWS     : TEXCOORD3;    // xyz: tangent, w: sign
-                float3 viewDirWS    : TEXCOORD4;                
             };
 
             // TEXTURE2D(_BaseMap);
@@ -79,18 +78,66 @@ Shader "core/urp/01.standard"
                 // half4   _BaseColor;
             CBUFFER_END
 
-            // Copied from Unity built-in shader v2018.3
-            float3 UnpackScaleNormal(float4 packednormal, float scale)
+            // // Copied from Unity built-in shader v2018.3
+            // float3 UnpackScaleNormal(float4 packednormal, float scale)
+            // {
+            // #ifndef UNITY_NO_DXT5nm
+            //     // Unpack normal as DXT5nm (1, y, 1, x) or BC5 (x, y, 0, 1)
+            //     // Note neutral texture like "bump" is (0, 0, 1, 1) to work with both plain RGB normal and DXT5nm/BC5
+            //     packednormal.x *= packednormal.w;
+            // #endif
+            //     float3 normal;
+            //     normal.xy = (packednormal.xy * 2 - 1) * scale;
+            //     normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
+            //     return normal;
+            // }
+
+            void InitializeInputData(Varyings input, half3 normalTS, out InputData inputData)
             {
-            #ifndef UNITY_NO_DXT5nm
-                // Unpack normal as DXT5nm (1, y, 1, x) or BC5 (x, y, 0, 1)
-                // Note neutral texture like "bump" is (0, 0, 1, 1) to work with both plain RGB normal and DXT5nm/BC5
-                packednormal.x *= packednormal.w;
-            #endif
-                float3 normal;
-                normal.xy = (packednormal.xy * 2 - 1) * scale;
-                normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                return normal;
+                inputData = (InputData)0;
+                inputData.positionWS = input.positionWS;
+
+                half3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+
+                float sgn = input.tangentWS.w;      // should be either +1 or -1
+                float3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
+                half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz);
+
+                inputData.tangentToWorld = tangentToWorld;
+                inputData.normalWS = TransformTangentToWorld(normalTS, tangentToWorld);
+          
+
+                inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
+                inputData.viewDirectionWS = viewDirWS;
+
+                inputData.shadowCoord = TransformWorldToShadowCoord(inputData.positionWS);
+
+            // #ifdef _ADDITIONAL_LIGHTS_VERTEX
+            //     inputData.fogCoord = InitializeInputDataFog(float4(input.positionWS, 1.0), input.fogFactorAndVertexLight.x);
+            //     inputData.vertexLighting = input.fogFactorAndVertexLight.yzw;
+            // #else
+            //     inputData.fogCoord = InitializeInputDataFog(float4(input.positionWS, 1.0), input.fogFactor);
+            // #endif
+
+            // #if defined(DYNAMICLIGHTMAP_ON)
+            //     inputData.bakedGI = SAMPLE_GI(input.staticLightmapUV, input.dynamicLightmapUV, input.vertexSH, inputData.normalWS);
+            // #else
+            //     inputData.bakedGI = SAMPLE_GI(input.staticLightmapUV, input.vertexSH, inputData.normalWS);
+            // #endif
+
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+                inputData.shadowMask = SAMPLE_SHADOWMASK(input.staticLightmapUV);
+
+                #if defined(DEBUG_DISPLAY)
+                #if defined(DYNAMICLIGHTMAP_ON)
+                    inputData.dynamicLightmapUV = input.dynamicLightmapUV;
+                #endif
+                #if defined(LIGHTMAP_ON)
+                    inputData.staticLightmapUV = input.staticLightmapUV;
+                #else
+                    inputData.vertexSH = input.vertexSH;
+                #endif
+                #endif
             }
 
             Varyings vert(Attributes input)
@@ -108,8 +155,6 @@ Shader "core/urp/01.standard"
                 half4 tangentWS = half4(normalInput.tangentWS.xyz, sign);
                 output.tangentWS = tangentWS;
 
-                output.viewDirWS = GetWorldSpaceNormalizeViewDir(vertexInput.positionWS);
-
                 return output;
             }
 
@@ -118,24 +163,32 @@ Shader "core/urp/01.standard"
                 SurfaceData surfaceData;
                 InitializeStandardLitSurfaceData(input.uv, surfaceData);
 
-                // normal can not be adjuested on mobile platform
-                float sgn = input.tangentWS.w;      // should be either +1 or -1
-                float3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
-                half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz);
-                half3 normalWS = TransformTangentToWorld(surfaceData.normalTS, tangentToWorld);
+                InputData inputData;
+                InitializeInputData(input, surfaceData.normalTS, inputData);
 
-                BRDFData brdfData;
-                InitializeBRDFData(surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.alpha, brdfData);
+                half4 color = UniversalFragmentPBR(inputData, surfaceData);
+                color.rgb = MixFog(color.rgb, inputData.fogCoord);
+
+                // // normal can not be adjuested on mobile platform
+                // float sgn = input.tangentWS.w;      // should be either +1 or -1
+                // float3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
+                // half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz);
+                // half3 normalWS = TransformTangentToWorld(surfaceData.normalTS, tangentToWorld);
+
+                // BRDFData brdfData;
+                // InitializeBRDFData(surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.alpha, brdfData);
 
 
-                half3 bakedGI = SampleSH(normalWS);
+                // half3 bakedGI = SampleSH(normalWS);
 
-                float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS); 
-                Light mainLight = GetMainLight(shadowCoord);
+                // float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS); 
+                // Light mainLight = GetMainLight(shadowCoord);
                
-                half4 color = half4(0, 0, 0, 1);                 
-                color.rgb = GlobalIllumination(brdfData, bakedGI, 1, normalWS, input.viewDirWS);
-                color.rgb += LightingPhysicallyBased(brdfData, mainLight, normalWS, input.viewDirWS);
+                // half4 color = half4(0, 0, 0, 1);                 
+                // color.rgb = GlobalIllumination(brdfData, bakedGI, 1, normalWS, input.viewDirWS);
+                // color.rgb += LightingPhysicallyBased(brdfData, mainLight, normalWS, input.viewDirWS);
+
+
 
                 // shadowCoord is position in shadow light space
                 // half3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
