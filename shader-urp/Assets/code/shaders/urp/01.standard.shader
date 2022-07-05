@@ -3,14 +3,13 @@ Shader "core/urp/01.standard"
 {
 	Properties
 	{
-		[MainColor] _BaseColor ("Base Color", Color) = (1,1,1,1)
-        [MainTexture] _BaseMap ("Base Map", 2D) = "white" {}
-       
+		[MainColor] _BaseColor ("Color", Color) = (1,1,1,1)
+        [MainTexture] _BaseMap ("Albedo", 2D) = "white" {}
 	}
 
 	SubShader
 	{
-		Tags{ "RenderType" = "Opaque"  "Queue" = "Geometry" "RenderPipeline" = "UniversalPipeline" }
+		Tags{ "RenderType" = "Opaque" "RenderPipeline" = "UniversalPipeline" "UniversalMaterialType" = "Lit" "IgnoreProjector" = "True" "ShaderModel"="4.5" }
 		Cull Back
 
         Pass
