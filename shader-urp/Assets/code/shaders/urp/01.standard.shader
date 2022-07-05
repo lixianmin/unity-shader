@@ -50,17 +50,19 @@ Shader "core/urp/01.standard"
             struct Attributes
             {
                 float4 positionOS   : POSITION;
-                float3 normalTS     : NORMAL;
-                float2 uv           : TEXCOORD0;
-                
+                float3 normalOS     : NORMAL;
+                float4 tangentOS    : TANGENT;
+                float2 texcoord     : TEXCOORD0;                
             };
 
             struct Varyings
             {
-                float4 positionHCS  : SV_POSITION;
-                float4 positionOS   : TEXCOORD0;
-                float3 normalWS     : TEXCOORD1;
-                float2 uv           : TEXCOORD2;
+                float4 positionCS   : SV_POSITION;
+                float2 uv           : TEXCOORD0;
+                float3 positionWS   : TEXCOORD1;
+                float3 normalWS     : TEXCOORD2;
+                half4 tangentWS     : TEXCOORD3;    // xyz: tangent, w: sign
+                float3 viewDirWS    : TEXCOORD4;                
             };
 
             // TEXTURE2D(_BaseMap);
@@ -70,7 +72,6 @@ Shader "core/urp/01.standard"
                 // float4  _BaseMap_ST;
                 // half4   _BaseColor;
             CBUFFER_END
-
 
             // Copied from Unity built-in shader v2018.3
             float3 UnpackScaleNormal(float4 packednormal, float scale)
@@ -88,36 +89,49 @@ Shader "core/urp/01.standard"
 
             Varyings vert(Attributes input)
             {
-                Varyings output;
-                output.positionHCS = TransformObjectToHClip(input.positionOS.xyz);
-                output.positionOS = input.positionOS;
-                output.normalWS = TransformObjectToWorldNormal(input.normalTS);
-                output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                Varyings output = (Varyings)0;
+                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+                VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+
+                output.positionCS = vertexInput.positionCS;
+                output.uv = TRANSFORM_TEX(input.texcoord, _BaseMap);
+                output.positionWS = vertexInput.positionWS;
+                output.normalWS = normalInput.normalWS;
+
+                real sign = input.tangentOS.w * GetOddNegativeScale();
+                half4 tangentWS = half4(normalInput.tangentWS.xyz, sign);
+                output.tangentWS = tangentWS;
+
+                output.viewDirWS = GetWorldSpaceNormalizeViewDir(vertexInput.positionWS);
 
                 return output;
             }
 
             half4 frag(Varyings input): SV_Target 
             {
-                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS);
-
                 SurfaceData surfaceData;
                 InitializeStandardLitSurfaceData(input.uv, surfaceData);
+
+                float sgn = input.tangentWS.w;      // should be either +1 or -1
+                float3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
+                half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz);
+
+                surfaceData.normalTS = UnpackScaleNormal(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, input.uv), _BumpScale);
+                half3 normalWS = TransformTangentToWorld(surfaceData.normalTS, tangentToWorld);
+
 
                 BRDFData brdfData;
                 InitializeBRDFData(surfaceData.albedo, surfaceData.metallic, surfaceData.specular, surfaceData.smoothness, surfaceData.alpha, brdfData);
 
 
-                half3 normalWS = UnpackScaleNormal(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, input.uv), _BumpScale);
-                // normalWS = input.normalWS;
                 half3 bakedGI = SampleSH(normalWS);
 
-                Light mainLight = GetMainLight(GetShadowCoord(vertexInput));
-                half3 viewDirectionWS = SafeNormalize(GetCameraPositionWS() - vertexInput.positionWS.xyz);
+                float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS); 
+                Light mainLight = GetMainLight(shadowCoord);
                
                 half4 color = half4(0, 0, 0, 1);                 
-                color.rgb = GlobalIllumination(brdfData, bakedGI, 1, normalWS, viewDirectionWS);
-                color.rgb += LightingPhysicallyBased(brdfData, mainLight, normalWS, viewDirectionWS);
+                color.rgb = GlobalIllumination(brdfData, bakedGI, 1, normalWS, input.viewDirWS);
+                color.rgb += LightingPhysicallyBased(brdfData, mainLight, normalWS, input.viewDirWS);
 
                 // shadowCoord is position in shadow light space
                 // half3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
