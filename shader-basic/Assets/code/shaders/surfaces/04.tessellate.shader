@@ -1,5 +1,5 @@
 
-Shader "study/04.tessellate"
+Shader "surfaces/04.tessellate"
 {
 	Properties
 	{

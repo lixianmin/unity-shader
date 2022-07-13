@@ -1,5 +1,5 @@
 
-Shader "study/02.xray"
+Shader "surfaces/02.xray"
 {
 	Properties
 	{

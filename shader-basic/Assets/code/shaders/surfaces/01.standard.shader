@@ -1,5 +1,5 @@
 
-Shader "study/01.standard"
+Shader "surfaces/01.standard"
 {
 	Properties
 	{

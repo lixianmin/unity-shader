@@ -1,5 +1,5 @@
 
-Shader "study/03.outline"
+Shader "surfaces/03.outline"
 {
 	Properties
 	{
