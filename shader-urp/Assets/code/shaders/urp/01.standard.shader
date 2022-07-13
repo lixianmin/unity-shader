@@ -132,7 +132,7 @@ Shader "core/urp/01.standard"
                 inputData = (InputData)0;
                 inputData.positionWS = input.positionWS;
 
-                half3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+                half3 viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
 
                 float sgn = input.tangentWS.w;      // should be either +1 or -1
                 float3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
@@ -141,7 +141,7 @@ Shader "core/urp/01.standard"
                 inputData.tangentToWorld = tangentToWorld;
                 inputData.normalWS = TransformTangentToWorld(normalTS, tangentToWorld);
                 inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
-                inputData.viewDirectionWS = viewDirWS;
+                inputData.viewDirectionWS = viewDirectionWS;
 
                 inputData.shadowCoord = TransformWorldToShadowCoord(inputData.positionWS);
 

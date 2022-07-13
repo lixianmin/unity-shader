@@ -8,8 +8,8 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: PBR Variant
-  m_Shader: {fileID: 4800000, guid: 8ff43000940be4c84b2f5356f1009337, type: 3}
-  m_Parent: {fileID: 2100000, guid: 6bfd4c5ffc15c48439fb473ac4aa4f68, type: 2}
+  m_Shader: {fileID: 4800000, guid: 84179b1c48b39442a8df69fd49eaad19, type: 3}
+  m_Parent: {fileID: 2100000, guid: 6a816e0910345437e9cfd62a3902a11e, type: 2}
   m_ModifiedSerializedProperties: 4
   m_ValidKeywords:
   - _NORMALMAP
