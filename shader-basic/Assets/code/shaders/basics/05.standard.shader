@@ -10,7 +10,7 @@ Shader "basics/05.standard"
 		[NoScaleOffset]_Normal ("Normal", 2D) = "bump" {}		// 法线贴图
 
         _Specular("Specular", Color) = (1, 1, 1, 1)
-        _Gloss ("Gloss", Range(8, 256)) = 20
+        _Gloss ("Gloss", Range(0.01, 1)) = 0.078125
 	}
 
 	SubShader
@@ -84,7 +84,7 @@ Shader "basics/05.standard"
                 // specuarl: NH
                 half3 H = normalize(lightDirWS + viewDirWS);
                 half NH = dot(normalWS, H);
-                half4 specular = _LightColor0 * _Specular * pow(saturate(NH), _Gloss);
+                half4 specular = _LightColor0 * _Specular * pow(saturate(NH), _Gloss * 128);
                 
                 // 环境光: Window->Rendering->Lighting->Environment->Source->Gradient
                 half4 color = unity_AmbientSky * albedo;
