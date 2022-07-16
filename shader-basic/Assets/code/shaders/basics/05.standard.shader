@@ -69,6 +69,7 @@ Shader "basics/05.standard"
             output.positionCS = UnityObjectToClipPos(input.vertex);
             output.texcoord = TRANSFORM_TEX(input.texcoord, _MainTex);
 
+            // 在vert()中计算切换变换矩阵, 参考《Unity Shader入门精要》P810
             float3 positionWS = mul(unity_ObjectToWorld, input.vertex);
             half3 normalWS = UnityObjectToWorldNormal(input.normal);    // 已标准化
             half3 tangentWS = UnityObjectToWorldDir(input.tangent);
