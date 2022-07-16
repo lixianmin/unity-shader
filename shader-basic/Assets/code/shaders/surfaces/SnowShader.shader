@@ -1,5 +1,3 @@
-// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
-
 
 /****************************************************************************
 created:	2013-04-17
@@ -10,7 +8,7 @@ reference: http://unitygems.com/noobs-guide-shaders-3-realistic-snow/
 Copyright(C) - All Rights Reserved
 ***************************************************************************/
 
-Shader "surface/SnowShader"
+Shader "surfaces/snow.shader"
 {
 	Properties
 	{

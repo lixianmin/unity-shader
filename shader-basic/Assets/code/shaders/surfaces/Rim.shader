@@ -6,7 +6,7 @@ author:		lixianmin
 Copyright(C) - All Rights Reserved
 ***************************************************************************/
 
-Shader "surface/Rim"
+Shader "surfaces/rim"
 {
 	Properties
 	{

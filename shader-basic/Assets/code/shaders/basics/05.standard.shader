@@ -1,4 +1,11 @@
 
+/****************************************************************************
+created:	2022-07-15
+author:		lixianmin
+
+Copyright(C) - All Rights Reserved
+***************************************************************************/
+
 Shader "basics/05.standard"
 {
 	Properties
@@ -74,7 +81,7 @@ Shader "basics/05.standard"
             // http://imgtec.eetrend.com/d6-imgtec/blog/2018-12/19314.html
             float3 positionWS = mul(unity_ObjectToWorld, input.vertex);
             half3 normalWS = UnityObjectToWorldNormal(input.normal);    // 已标准化
-            half3 tangentWS = UnityObjectToWorldDir(input.tangent);
+            half3 tangentWS = UnityObjectToWorldDir(input.tangent);     // 已标准化
             half3 binormalWS = cross(normalWS, tangentWS) * input.tangent.w;
 
             output.T2W0 = float4(tangentWS.x, binormalWS.x, normalWS.x, positionWS.x);
