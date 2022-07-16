@@ -46,7 +46,7 @@ Shader "cg/Plasma"
 				return output;
 			}
 
-			half4 frag(v2f input): COLOR
+			half4 frag(v2f input): SV_TARGET
 			{
 				float2 ca	= float2(0.2, 0.2);   
 				float2 cb	= float2(0.7, 0.9);   

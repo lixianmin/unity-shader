@@ -134,6 +134,7 @@ Shader "basics/05.standard"
 
         Pass
         {
+            Name "FORWARDBASE"
             Tags{ "LightMode"="ForwardBase"}
 
             CGPROGRAM
@@ -147,6 +148,7 @@ Shader "basics/05.standard"
 
         Pass
         {
+            Name "FORWARDADD"
             Tags{ "LightMode"="ForwardAdd"}
             ZWrite Off
             Blend One One   // 开启blend, 否则会替换掉面的pass

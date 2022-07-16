@@ -9,7 +9,7 @@ reference: http://glsl.heroku.com/e#7604.0
 Copyright(C) - All Rights Reserved
 ***************************************************************************/
 
-Shader "fx/Swirl"
+Shader "basics/swirl"
 {
 	Properties
 	{
