@@ -28,7 +28,7 @@ Shader "basics/05.standard"
         {
             float4 vertex       : POSITION;
             float3 normal       : NORMAL;
-            float4 tangent      : TANGENT;
+            float4 tangent      : TANGENT;  // tangent.w决定在切线空间中binormal的方向
             float2 texcoord     : TEXCOORD0;
         };
 
@@ -69,7 +69,7 @@ Shader "basics/05.standard"
             output.positionCS = UnityObjectToClipPos(input.vertex);
             output.positionOS = input.vertex;
             output.normalWS = UnityObjectToWorldNormal(input.normal);    // 已标准化
-            output.tangentWS = UnityObjectToWorldNormal(input.tangent);
+            output.tangentWS = UnityObjectToWorldDir(input.tangent);
             output.texcoord = TRANSFORM_TEX(input.texcoord, _MainTex);
 
             // cd /Applications/Unity/Hub/Editor/2022.1.7f1c1/Unity.app/Contents/CGIncludes
