@@ -35,11 +35,11 @@ Shader "basics/05.standard"
         struct Varyings
         {
             float4 positionCS	: SV_POSITION;
-            float4 positionOS   : TEXCOORD0;
-            float3 normalWS     : TEXCOORD1;
-            float3 tangentWS    : TEXCOORD2;
-            float2 texcoord     : TEXCOORD3;
-            SHADOW_COORDS(4)    // 保存阴影坐标, 其中2是TEXCOORD2的意思
+            float2 texcoord     : TEXCOORD0;
+            float4 T2W0         : TEXCOORD1;
+            float4 T2W1         : TEXCOORD2;
+            float4 T2W2         : TEXCOORD3;
+            SHADOW_COORDS(4)    // 保存阴影坐标, 其中4是TEXCOORD4的意思
         };
 
         half4 	    _Color;
@@ -52,25 +52,31 @@ Shader "basics/05.standard"
         half4       _Specular;
         half        _Gloss;
 
-        float3x3 fetchTagentTransform(float3 normalDir, float3 tangentDir)
-        {
-            normalDir = normalize(normalDir);
-            tangentDir = normalize(tangentDir - dot(tangentDir, normalDir) * normalDir);
+        // float3x3 fetchTagentTransform(float3 normalDir, float3 tangentDir)
+        // {
+        //     normalDir = normalize(normalDir);
+        //     tangentDir = normalize(tangentDir - dot(tangentDir, normalDir) * normalDir);
             
-            float3 binormalDir = normalize(cross(normalDir, tangentDir));
-            float3x3 tangentTransform = float3x3(tangentDir, binormalDir, normalDir);
+        //     float3 binormalDir = normalize(cross(normalDir, tangentDir));
+        //     float3x3 tangentTransform = float3x3(tangentDir, binormalDir, normalDir);
 
-            return tangentTransform;
-        }
+        //     return tangentTransform;
+        // }
 
         Varyings vert(Attributes input)
         {
             Varyings output;
             output.positionCS = UnityObjectToClipPos(input.vertex);
-            output.positionOS = input.vertex;
-            output.normalWS = UnityObjectToWorldNormal(input.normal);    // 已标准化
-            output.tangentWS = UnityObjectToWorldDir(input.tangent);
             output.texcoord = TRANSFORM_TEX(input.texcoord, _MainTex);
+
+            float3 positionWS = mul(unity_ObjectToWorld, input.vertex);
+            half3 normalWS = UnityObjectToWorldNormal(input.normal);    // 已标准化
+            half3 tangentWS = UnityObjectToWorldDir(input.tangent);
+            half3 binormalWS = cross(normalWS, tangentWS) * input.tangent.w;
+
+            output.T2W0 = float4(tangentWS.x, binormalWS.x, normalWS.x, positionWS.x);
+            output.T2W1 = float4(tangentWS.y, binormalWS.y, normalWS.y, positionWS.y);
+            output.T2W2 = float4(tangentWS.z, binormalWS.z, normalWS.z, positionWS.z);
 
             // cd /Applications/Unity/Hub/Editor/2022.1.7f1c1/Unity.app/Contents/CGIncludes
             Attributes v = input;   // TRANSFER_SHADOW宏要求必须有v.vertex的定义
@@ -80,13 +86,12 @@ Shader "basics/05.standard"
 
         half4 frag(Varyings input) : SV_Target
         {
-            half4 positionWS = mul(unity_ObjectToWorld, input.positionOS);
-            
-            half3 normalLocal = UnpackScaleNormal(tex2D(_Normal, input.texcoord), _Bumpiness);
-            half3 normalWS = normalize(mul(normalLocal, fetchTagentTransform(input.normalWS, input.tangentWS)));
-
+            float3 positionWS = float4(input.T2W0.w, input.T2W1.w, input.T2W2.w, 1);
             half3 lightDirWS = normalize(UnityWorldSpaceLightDir(positionWS));
-            half3 viewDirWS = normalize(UnityWorldSpaceViewDir(positionWS));
+            half3 viewDirWS = normalize(UnityWorldSpaceViewDir(positionWS)); 
+            
+            half3 bump = UnpackScaleNormal(tex2D(_Normal, input.texcoord), _Bumpiness);
+            half3 normalWS = normalize(half3(dot(input.T2W0.xyz, bump), dot(input.T2W1.xyz, bump), dot(input.T2W2.xyz, bump)));
 
             // diffuse: NL
             half4 albedo = _Color * tex2D(_MainTex, input.texcoord);
