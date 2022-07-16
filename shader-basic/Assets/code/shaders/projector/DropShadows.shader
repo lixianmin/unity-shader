@@ -37,7 +37,7 @@ Shader "projector/DropShadows"
 				float4 projPosition	: TEXCOORD0; // position in projector space
 			};
 
-			v2f vert(float4 vertex : SV_POSITION) 
+			v2f vert(float4 vertex : POSITION) 
 			{
 				v2f output;
 				output.position		= UnityObjectToClipPos(vertex);
