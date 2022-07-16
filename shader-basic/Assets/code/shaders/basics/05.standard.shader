@@ -28,6 +28,7 @@ Shader "basics/05.standard"
         {
             float4 vertex       : POSITION;
             float3 normal       : NORMAL;
+            float4 tangent      : TANGENT;
             float2 texcoord     : TEXCOORD0;
         };
 
@@ -35,24 +36,40 @@ Shader "basics/05.standard"
         {
             float4 positionCS	: SV_POSITION;
             float4 positionOS   : TEXCOORD0;
-            float3 normalOS     : TEXCOORD1;
-            float2 texcoord     : TEXCOORD2;
-            SHADOW_COORDS(3)    // 保存阴影坐标, 其中2是TEXCOORD2的意思
+            float3 normalWS     : TEXCOORD1;
+            float3 tangentWS    : TEXCOORD2;
+            float2 texcoord     : TEXCOORD3;
+            SHADOW_COORDS(4)    // 保存阴影坐标, 其中2是TEXCOORD2的意思
         };
 
         half4 	    _Color;
         sampler2D 	_MainTex;
         float4		_MainTex_ST;
 
+        half		_Bumpiness;
+		sampler2D 	_Normal;
+
         half4       _Specular;
         half        _Gloss;
+
+        float3x3 fetchTagentTransform(float3 normalDir, float3 tangentDir)
+        {
+            normalDir = normalize(normalDir);
+            tangentDir = normalize(tangentDir - dot(tangentDir, normalDir) * normalDir);
+            
+            float3 binormalDir = normalize(cross(normalDir, tangentDir));
+            float3x3 tangentTransform = float3x3(tangentDir, binormalDir, normalDir);
+
+            return tangentTransform;
+        }
 
         Varyings vert(Attributes input)
         {
             Varyings output;
             output.positionCS = UnityObjectToClipPos(input.vertex);
             output.positionOS = input.vertex;
-            output.normalOS = input.normal;
+            output.normalWS = UnityObjectToWorldNormal(input.normal);    // 已标准化
+            output.tangentWS = UnityObjectToWorldNormal(input.tangent);
             output.texcoord = TRANSFORM_TEX(input.texcoord, _MainTex);
 
             // cd /Applications/Unity/Hub/Editor/2022.1.7f1c1/Unity.app/Contents/CGIncludes
@@ -64,7 +81,9 @@ Shader "basics/05.standard"
         half4 frag(Varyings input) : SV_Target
         {
             half4 positionWS = mul(unity_ObjectToWorld, input.positionOS);
-            half3 normalWS = UnityObjectToWorldNormal(input.normalOS);    // 已标准化
+            
+            half3 normalLocal = UnpackScaleNormal(tex2D(_Normal, input.texcoord), _Bumpiness);
+            half3 normalWS = normalize(mul(normalLocal, fetchTagentTransform(input.normalWS, input.tangentWS)));
 
             half3 lightDirWS = normalize(UnityWorldSpaceLightDir(positionWS));
             half3 viewDirWS = normalize(UnityWorldSpaceViewDir(positionWS));
@@ -103,6 +122,7 @@ Shader "basics/05.standard"
             Tags{ "LightMode"="ForwardBase"}
 
             CGPROGRAM
+            #pragma target 3.0
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_fwdbase   // 为不同的灯光编译不同的pass, 比如顶点灯, 象素灯
@@ -117,6 +137,7 @@ Shader "basics/05.standard"
             Blend One One   // 开启blend, 否则会替换掉面的pass
 
             CGPROGRAM
+            #pragma target 3.0
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_fwdadd_fullshadows   // 开始shadows? 
