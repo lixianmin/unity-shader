@@ -10,13 +10,16 @@ Shader "basics/05.standard"
 		[NoScaleOffset]_Normal ("Normal", 2D) = "bump" {}		// 法线贴图
 
         _Specular("Specular", Color) = (1, 1, 1, 1)
-        _Gloss ("Gloss", Range(0.01, 1)) = 0.078125
+        _Gloss ("Shininess", Range(0.01, 1)) = 0.078125
 	}
 
 	SubShader
 	{
 		Tags{ "RenderType" = "Opaque"  "Queue" = "Geometry" }
 		Cull Back
+
+        // CGPROGRAM
+        // ENDCG
 
         Pass
         {
@@ -108,8 +111,8 @@ Shader "basics/05.standard"
         Pass
         {
             Tags{ "LightMode"="ForwardAdd"}
-            // 开启blend, 否则会替换掉面的pass
-            Blend One One
+            ZWrite Off
+            Blend One One   // 开启blend, 否则会替换掉面的pass
 
             CGPROGRAM
             #pragma vertex vert
@@ -148,6 +151,7 @@ Shader "basics/05.standard"
                 Varyings output;
                 output.positionCS = UnityObjectToClipPos(input.vertex);
                 output.positionOS = input.vertex;
+                output.normalOS = input.normal;
                 output.texcoord = TRANSFORM_TEX(input.texcoord, _MainTex);
 
                 // cd /Applications/Unity/Hub/Editor/2022.1.7f1c1/Unity.app/Contents/CGIncludes
@@ -172,7 +176,7 @@ Shader "basics/05.standard"
                 // specuarl: NH
                 half3 H = normalize(lightDirWS + viewDirWS);
                 half NH = dot(normalWS, H);
-                half4 specular = _LightColor0 * _Specular * pow(saturate(NH), _Gloss);
+                half4 specular = _LightColor0 * _Specular * pow(saturate(NH), _Gloss*128);
                 
                 // 环境光: Window->Rendering->Lighting->Environment->Source->Gradient
                 half4 color = unity_AmbientSky * albedo;
