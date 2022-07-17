@@ -51,7 +51,7 @@ Shader "basics/06.puddle"
             struct v2f
             {
                 float4 pos              : SV_POSITION;
-                float4 mainnormalCoord  : TEXCOORD0; // 颜色和法线的纹理坐标
+                float4 mainNormalCoord  : TEXCOORD0; // 颜色和法线的纹理坐标
                 float2 maskCoord        : TEXCOORD1; // Mask的纹理坐标
 
                 float4 worldPos         : TEXCOORD2; // 世界空间顶点坐标
@@ -80,9 +80,9 @@ Shader "basics/06.puddle"
                 o.pos = UnityObjectToClipPos(v.vertex.xyz);
 
                 // 计算贴图的纹理坐标
-                o.mainnormalCoord.xy = TRANSFORM_TEX(v.texcoord, _MainTex);
-                o.mainnormalCoord.zw = TRANSFORM_TEX(v.texcoord, _Normal);
-                o.mainnormalCoord.zw += float2(_NormalSpeedX, _NormalSpeedY) * _Time.x;
+                o.mainNormalCoord.xy = TRANSFORM_TEX(v.texcoord, _MainTex);
+                o.mainNormalCoord.zw = TRANSFORM_TEX(v.texcoord, _Normal);
+                o.mainNormalCoord.zw += float2(_NormalSpeedX, _NormalSpeedY) * _Time.x;
                 o.maskCoord = v.texcoord.xy;
 
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex);
@@ -94,12 +94,12 @@ Shader "basics/06.puddle"
             half4 frag (v2f i) : SV_Target
             {
                 // 计算法线强度
-                fixed2 normal = UnpackNormal(tex2D(_Normal, i.mainnormalCoord.zw)).xy;
+                fixed2 normal = UnpackNormal(tex2D(_Normal, i.mainNormalCoord.zw)).xy;
                 fixed mask = tex2D(_NormalMask, i.maskCoord);
                 normal *= _NormalIntensity * mask * 0.01;
 
                 // 计算颜色
-                float2 mainCoord = i.mainnormalCoord.xy + normal;
+                float2 mainCoord = i.mainNormalCoord.xy + normal;
                 fixed4 color = tex2D(_MainTex, mainCoord);
                 color.rgb -= (mask * _Depth);
 
