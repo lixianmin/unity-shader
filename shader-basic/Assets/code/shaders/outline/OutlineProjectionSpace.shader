@@ -69,7 +69,7 @@ Shader "cg/OutlineProjectionSpace"
 
 			}
 
-			half4 frag(v2f input): COLOR
+			half4 frag(v2f input): SV_TARGET
 			{
 				half4 output	= _OutlineColor; 
 				return output;

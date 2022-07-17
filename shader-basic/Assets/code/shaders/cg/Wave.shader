@@ -7,8 +7,6 @@
 created:	2013-04-17
 author:		lixianmin
 
-reference: http://kiwiflyingmad.com/?p=439
-
 Copyright(C) - All Rights Reserved
 ***************************************************************************/
 
