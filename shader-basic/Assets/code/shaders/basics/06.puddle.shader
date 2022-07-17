@@ -42,8 +42,6 @@ Shader "basics/06.puddle"
 
         Pass 
         {
-
-
             CGPROGRAM
             
             #include "UnityCG.cginc"
@@ -65,15 +63,15 @@ Shader "basics/06.puddle"
 
             sampler2D   _Normal;
             float4      _Normal_ST;
-            fixed       _NormalIntensity;
-            fixed       _NormalSpeedX;
-            fixed       _NormalSpeedY;
+            half        _NormalIntensity;
+            half        _NormalSpeedX;
+            half        _NormalSpeedY;
 
             sampler2D   _NormalMask;
-            fixed       _Depth;
+            half        _Depth;
 
             samplerCUBE _Cubemap;
-            fixed       _Reflection;
+            half        _Reflection;
 
 
             v2f vert (appdata_base v)
@@ -100,18 +98,17 @@ Shader "basics/06.puddle"
                 half2 bump = UnpackNormalWithScale(tex2D(_Normal, i.mainNormalCoord.zw), _NormalIntensity * mask * 0.01);
 
                 // 计算颜色
-                float2 mainCoord = i.mainNormalCoord.xy + bump;
+                float2 mainCoord = i.mainNormalCoord.xy + bump; // 法线可以用作扰动
                 half4 color = tex2D(_MainTex, mainCoord);
-                color.rgb += (mask * _Depth);   // 调整一下颜色深度
+                color.rgb += (mask * _Depth);   // 调一下颜色深度
 
                 // 计算反射
-                float3 viewDir = UnityWorldSpaceViewDir(i.worldPos.xyz);
-                viewDir = normalize(viewDir);
-                half3 refDir = reflect(-viewDir.xyz, i.worldNormal);
-                half4 ref = texCUBE(_Cubemap, refDir);
+                float3 viewDir = normalize(UnityWorldSpaceViewDir(i.worldPos.xyz));
+                half3 reflectDir = reflect(-viewDir.xyz, i.worldNormal);
+                half4 reflectColor = texCUBE(_Cubemap, reflectDir);
 
                 // 颜色与反射混合
-                return lerp(color, ref, mask * _Reflection);
+                return lerp(color, reflectColor, mask * _Reflection);
             }
 
             ENDCG
