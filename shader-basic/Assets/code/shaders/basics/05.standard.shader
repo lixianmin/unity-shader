@@ -135,8 +135,11 @@ Shader "basics/05.standard"
 
         Pass
         {
-            Name "FORWARDBASE"
-            Tags{ "LightMode"="ForwardBase"}
+            Name "FORWARDBASE" 
+            // 1. ForwardBase会计算ambient, 最重要的方向光, 逐顶点/SH光源和lightmaps. 
+            // 2. ForwardBase只执行一次
+            // 3. 设置LightMode是为了通知unity3d设置相关的光影变量, 如_LightColor0, _WorldSpaceLightPos0等
+            Tags{ "LightMode"="ForwardBase"} 
 
             CGPROGRAM
             #pragma target 3.0
@@ -146,6 +149,7 @@ Shader "basics/05.standard"
             
             half4 frag(Varyings input) : SV_Target
             {
+                // ambient与emission只在ForwardBase中计算, 而在ForwardAdd中不考虑, 否则就重复算了2遍
                 return inner_frag(input, 1);
             }
 
@@ -155,18 +159,21 @@ Shader "basics/05.standard"
         Pass
         {
             Name "FORWARDADD"
-            Tags{ "LightMode"="ForwardAdd"}
-            ZWrite Off
-            Blend One One   // 开启blend, 否则会替换掉面的pass
+            Tags{ "LightMode"="ForwardAdd"} // 不计算ambient, 计算额外的逐pixel光源, 每个pass对应一个光源
+            ZWrite Off      // 深度缓冲
+            Blend One One   // 颜色缓冲: 开启blend, 否则会替换掉前面pass写的颜色缓冲值
+            // Blend SrcAlpha One   
 
             CGPROGRAM
             #pragma target 3.0
             #pragma vertex vert
             #pragma fragment frag
-            #pragma multi_compile_fwdadd_fullshadows   // 开始shadows? 
+            // #pragma multi_compile_fwdadd_fullshadows   // 开启shadow效果, 默认multi_compile_fwdadd不支持阴影效果
 
+            // 去掉ForwardBase中 ambient, emission, 逐顶点光照, SH光照的部分. 并添加一些对不同光源类型的支持.
             half4 frag(Varyings input) : SV_Target
             {
+                // return half4(0, 0, 0, 1);
                 return inner_frag(input, 0);
             }
 
@@ -174,5 +181,6 @@ Shader "basics/05.standard"
         }
 	}
 
+    // 借用内置的shader中的 ShadowCaster 把物体的深度信息渲染到shadowmap或深度纹理中
 	Fallback "Mobile/Diffuse"
 }
