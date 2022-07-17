@@ -100,7 +100,8 @@ Shader "basics/05.standard"
             half3 lightDirWS = normalize(UnityWorldSpaceLightDir(positionWS));
             half3 viewDirWS = normalize(UnityWorldSpaceViewDir(positionWS)); 
             
-            half3 bump = UnpackScaleNormal(tex2D(_Normal, input.texcoord), _Bumpiness);
+            // Unity标准库中定义了两个功能相同的方法 UnpackNormalWithScale(UnityCG.cginc)与UnpackScaleNormal(UnityStandardUtils.cginc)
+            half3 bump = UnpackNormalWithScale(tex2D(_Normal, input.texcoord.xy), _Bumpiness);
             half3 normalWS = normalize(half3(dot(input.T2W0.xyz, bump), dot(input.T2W1.xyz, bump), dot(input.T2W2.xyz, bump)));
 
             // diffuse: NL
