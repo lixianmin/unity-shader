@@ -43,7 +43,7 @@ Shader "projector/LookAtLight"
 
 			v2f vert(float4 vertex : POSITION) 
 			{
-				v2f output;
+				v2f output;	
 				float4 lightSpacePosition	= mul(unity_WorldToLight, mul(unity_ObjectToWorld, vertex));
 				output.position		= mul(UNITY_MATRIX_P, lightSpacePosition);
 				output.test	= lightSpacePosition;
