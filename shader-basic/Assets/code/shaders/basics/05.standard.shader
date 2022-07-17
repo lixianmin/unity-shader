@@ -94,7 +94,7 @@ Shader "basics/05.standard"
             return output;
         }
 
-        half4 frag(Varyings input) : SV_Target
+        half4 inner_frag(Varyings input, half using_ambient)
         {
             float3 positionWS = float4(input.T2W0.w, input.T2W1.w, input.T2W2.w, 1);
             half3 lightDirWS = normalize(UnityWorldSpaceLightDir(positionWS));
@@ -115,7 +115,7 @@ Shader "basics/05.standard"
             half4 specular = _LightColor0 * _Specular * pow(saturate(NH), _Gloss * 128);
             
             // 环境光: Window->Rendering->Lighting->Environment->Source->Gradient
-            half4 color = unity_AmbientSky * albedo;
+            half4 color = using_ambient * unity_AmbientSky * albedo;
             half4 lightShade = diffuse + specular;
 
             // 补4个点光源
@@ -144,6 +144,11 @@ Shader "basics/05.standard"
             #pragma fragment frag
             #pragma multi_compile_fwdbase   // 为不同的灯光编译不同的pass, 比如顶点灯, 象素灯
             
+            half4 frag(Varyings input) : SV_Target
+            {
+                return inner_frag(input, 1);
+            }
+
             ENDCG
         }
 
@@ -159,6 +164,11 @@ Shader "basics/05.standard"
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_fwdadd_fullshadows   // 开始shadows? 
+
+            half4 frag(Varyings input) : SV_Target
+            {
+                return inner_frag(input, 0);
+            }
 
             ENDCG
         }
