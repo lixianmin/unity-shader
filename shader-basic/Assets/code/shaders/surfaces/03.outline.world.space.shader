@@ -1,5 +1,5 @@
 
-Shader "surfaces/03.outline"
+Shader "surfaces/03.outline.world.space"
 {
 	Properties
 	{
