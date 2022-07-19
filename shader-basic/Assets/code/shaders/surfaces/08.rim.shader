@@ -1,8 +1,10 @@
 
-Shader "surfaces/01.standard"
+Shader "surfaces/08.rim"
 {
 	Properties
 	{
+        [Header(Standard Part)]
+        [Space(10)]
 		// ONE
 		_AlbedoColor ("Albedo Color", Color) = (1,1,1,1)		// 返照率乘参, 所有贴图都会配一个乘参
         _Albedo ("Albedo (RGB)", 2D) = "white" {}				// 反照率
@@ -16,6 +18,11 @@ Shader "surfaces/01.standard"
 
         _Glossiness ("Smoothness", Range(0,1)) = 0.5	// 光滑度
         [Gamma]_Metallic ("Metallic", Range(0,1)) = 0.0	// 金属质感
+
+        [Header(Rim Part)]
+        [Space(10)]
+        _RimColor("Rim Color", Color)	= (.26, .19, .16, 0)
+		_RimPower("Rim Power", Float)	= 3.0
 	}
 
 	SubShader
@@ -44,8 +51,10 @@ Shader "surfaces/01.standard"
 
 		half 		_Glossiness;
 		half 		_Metallic;
-		
 
+        half4       _RimColor;
+        half        _RimPower;
+		
 		// // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
         // // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
         // // #pragma instancing_options assumeuniformscaling
@@ -69,7 +78,7 @@ Shader "surfaces/01.standard"
 			// 光滑度 0:完全粗糙, 1:完全光滑
             output.Smoothness = _Glossiness;
 			// 环境光遮挡 0:完全接受光照, 1:完全使用AO贴图
-			output.Occlusion = lerp(half4( 1,1,1,1), tex2D(_AmbientOcclusion, input.uv_Albedo), _Ambient).r;
+			output.Occlusion = lerp(fixed4( 1,1,1,1), tex2D(_AmbientOcclusion, input.uv_Albedo), _Ambient).r;
 
 			// 金属度 0:完全粗糙, 1:完全金属
 			output.Metallic = _Metallic;
