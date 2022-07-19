@@ -126,3 +126,5 @@ float SobelFilter(sampler2D image, float2 texcoord, float2 texelSize)
 	// // ... and threshold against a squared value instead
 	// float isEdge	= edgeSquared > 0.07 * 0.07;
 }
+
+#endif
