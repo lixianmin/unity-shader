@@ -114,7 +114,8 @@ Shader "basics/05.standard"
             //   float specular = (NdotL > 0) ? pow(max(0.0, NdotH), m);
             //   return float4(1.0, max(0.0, NdotL), specular, 1.0);
             // }
-            half4 lighting = lit(dot(N, L), dot(N, normalize(L+V)), _Gloss * 128.0); 
+            // half4 lighting = lit(dot(N, L), dot(N, normalize(L+V)), _Gloss * 128);
+            half4 lighting = half4(1.0, max(0, dot(N, L)), pow(max(0, dot(N, normalize(L+V))), _Gloss * 128), 1.0);
 
             // diffuse: NL
             half4 albedo = _Color * tex2D(_MainTex, input.texcoord);
