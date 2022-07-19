@@ -21,8 +21,9 @@ Shader "surfaces/08.rim"
 
         [Header(Rim Part)]
         [Space(10)]
-        _RimColor("Rim Color", Color)	= (.26, .19, .16, 0)
-		_RimPower("Rim Power", Float)	= 3.0
+        _RimColor("Rim Color", Color)	= (.26, .19, .16, 1)
+        _RimWidth("Rim Width", Float)	= 0.0
+		_RimPower("Rim Power", Range(0, 5)) = 1.5
 	}
 
 	SubShader
@@ -34,9 +35,14 @@ Shader "surfaces/08.rim"
 		#pragma target 3.0
 		#pragma surface surf Standard fullforwardshadows 
 
+        // 参考: https://docs.unity.cn/cn/2019.4/Manual/SL-SurfaceShaders.html
 		struct Input
 		{
 			float2 uv_Albedo;
+            float3 worldPos;
+            float3 worldNormal; 
+            float3 viewDir; // viewDir有可能在world space或tangent space中. 参考: https://forum.unity.com/threads/confusion-about-worldnormal-in-surface-shader.427413/
+            INTERNAL_DATA   // 是指从tangent到world的转换矩阵
 		};
 
 		half4		_AlbedoColor;
@@ -53,14 +59,15 @@ Shader "surfaces/08.rim"
 		half 		_Metallic;
 
         half4       _RimColor;
+        half        _RimWidth;
         half        _RimPower;
 		
 		// // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
         // // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
         // // #pragma instancing_options assumeuniformscaling
-        // UNITY_INSTANCING_BUFFER_START(Props)
-        // // put more per-instance properties here
-        // UNITY_INSTANCING_BUFFER_END(Props)
+        UNITY_INSTANCING_BUFFER_START(Props)
+        // put more per-instance properties here
+        UNITY_INSTANCING_BUFFER_END(Props)
 
 		// SurfaceOutputStandard = ONE + SOA
 		void surf(Input input , inout SurfaceOutputStandard output)
@@ -70,8 +77,16 @@ Shader "surfaces/08.rim"
             output.Albedo = c.rgb;	//  albedo与alpha是一对, 加起来恰好是一个float4, 因此albedo是rgb
 			output.Alpha = c.a;
 			
-			// tangent空间法线
+            // 参考: https://forum.unity.com/threads/confusion-about-worldnormal-in-surface-shader.427413/
+            // 
+            // 选中 Surface Shader, 并点击Show generated code 看到从surface shader生成的源代码
+            // 1. 默认情况下, input.viewDir与output.Normal都是world空间的
+			// 2. 但覆写output.Normal会导致input.viewDir与output.Normal变成tangent空间的值
+            // 3. 不管是否覆写outpu.Normal的值, 在surface shader中, 永远可以使用WorldNormalVector()来取得world空间的向量值
+            //   half3 normalWS = WorldNormalVector(input, output.Normal);
+            //   half3 viewDirWS = WorldNormalVector(input, input.viewDir);
 			output.Normal = UnpackScaleNormal(tex2D(_Normal, input.uv_Albedo), _Bumpiness);
+
 			// 自发光
 			output.Emission = (tex2D(_Emission, input.uv_Albedo ) * _EmissionColor).rgb;
 
@@ -82,6 +97,17 @@ Shader "surfaces/08.rim"
 
 			// 金属度 0:完全粗糙, 1:完全金属
 			output.Metallic = _Metallic;
+
+            // Rim属于自发光部分: rim属于视角上的边缘检测
+            // 
+            // // 以下是在world空间的向量计算
+            // half3 normalWS = WorldNormalVector(input, output.Normal);
+            // half3 viewDirWS = WorldNormalVector(input, input.viewDir);
+            // half rim = 1.0 - saturate(dot(normalWS, viewDirWS) + _RimWidth);
+            // 
+            // // 也可以直接使用tangent空间计算
+            half rim = 1.0 - saturate(dot(output.Normal, input.viewDir) + _RimWidth); 
+			output.Emission.rgb += _RimColor.rgb * pow(rim, _RimPower) * _RimColor.a;
 		}
 
 		ENDCG
