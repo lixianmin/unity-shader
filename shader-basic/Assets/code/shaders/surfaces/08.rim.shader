@@ -39,10 +39,10 @@ Shader "surfaces/08.rim"
 		struct Input
 		{
 			float2 uv_Albedo;
-            float3 worldPos;
-            float3 worldNormal; 
-            float3 viewDir; // viewDir有可能在world space或tangent space中. 参考: https://forum.unity.com/threads/confusion-about-worldnormal-in-surface-shader.427413/
-            INTERNAL_DATA   // 是指从tangent到world的转换矩阵
+            // float3 worldPos;
+            // float3 worldNormal; // 通常用不上, 通用做法是直接使用WorldNormalVector(input, output.Normal);
+            float3 viewDir; // viewDir有可能在world空间或tangent空间中. 参考: https://forum.unity.com/threads/confusion-about-worldnormal-in-surface-shader.427413/
+            INTERNAL_DATA   // 当overwrite output.Normal时是指从tangent到world的转换矩阵, 否则是空. 所以可以无脑带着
 		};
 
 		half4		_AlbedoColor;
