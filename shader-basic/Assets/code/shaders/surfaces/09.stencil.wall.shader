@@ -1,4 +1,4 @@
-Shader "surfaces/09.pierce.wall"
+Shader "surfaces/09.stencil.wall"
 {
     Properties
     {
@@ -13,7 +13,7 @@ Shader "surfaces/09.pierce.wall"
         //以下为主要部分        
         Stencil
         {
-            Ref 1
+            Ref  1
             Comp NotEqual
             Pass Keep
         }
