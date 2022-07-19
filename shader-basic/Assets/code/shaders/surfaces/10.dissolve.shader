@@ -2,7 +2,7 @@ Shader "surfaces/10.dissolve"
 {
     Properties
     {
-        _NoiseTex("Noise", 2D) = "white"{} //Noise贴图
+        _NoiseTex("noise", 2D) = "white"{} //Noise贴图
         _RampTex("Ramp", 2D) = "black"{} //渐变贴图
         _Dissolve("Dissolve", Range(0, 1)) = 0 //消融程度
         _Emission("Emission", float) = 1 //自发光强度
@@ -23,15 +23,15 @@ Shader "surfaces/10.dissolve"
         #pragma surface surf StandardSpecular addshadow fullforwardshadows
         #pragma target 3.0
 
-        sampler2D _NoiseTex;
-        sampler2D _RampTex;
-        fixed _Dissolve;
-        float _Emission;
+        sampler2D   _NoiseTex;
+        sampler2D   _RampTex;
+        half        _Dissolve;
+        float       _Emission;
 
-        sampler2D _MainTex;
-        sampler2D _Specular;
-        sampler2D _Normal;
-        sampler2D _AO;
+        sampler2D   _MainTex;
+        sampler2D   _Specular;
+        sampler2D   _Normal;
+        sampler2D   _AO;
 
         struct Input
         {
@@ -46,23 +46,23 @@ Shader "surfaces/10.dissolve"
         // put more per-instance properties here
         UNITY_INSTANCING_BUFFER_END(Props)
 
-        void surf (Input IN, inout SurfaceOutputStandardSpecular o)
+        void surf (Input input, inout SurfaceOutputStandardSpecular output)
         {
-            fixed Noise = tex2D(_NoiseTex, IN.uv_NoiseTex).r;
-            fixed dissolve = _Dissolve * 2 - 1; //将范围从[0,1]重新映射为[-1,1]
-            clip(Noise - dissolve - 0.5); //Alpha Test函数，结果小于0的像素会被剔除
+            half noise = tex2D(_NoiseTex, input.uv_NoiseTex).r;
+            half dissolve = _Dissolve * 2 - 1;  // 将范围从[0,1]映射为[-1,1]
+            clip(noise - dissolve - 0.001);     // 目标是完会消融, 因此减去0.001以解决精度不足遗留残渣
 
-            fixed border = 1 - saturate(saturate(((Noise - dissolve)) * 8 - 4)); //将计算结果的范围重新映射到[-4,4]，裁切到[0,1]然后反相
-            o.Emission = tex2D(_RampTex, fixed2(border, 0.5)) * _Emission; //自发光
+            half border = 1 - (saturate((noise - dissolve) * 8 - 4)); //将计算结果的范围重新映射到[-4,4]，裁切到[0,1]然后反向
+            output.Emission = tex2D(_RampTex, half2(border, 0.5)) * _Emission; //自发光
 
-            fixed4 c = tex2D (_MainTex, IN.uv_MainTex);
-            o.Albedo = c.rgb; //漫反射
+            half4 c = tex2D (_MainTex, input.uv_MainTex);
+            output.Albedo = c.rgb; // 返照率
 
-            fixed4 specular = tex2D(_Specular, IN.uv_MainTex);
-            o.Specular = specular.rgb; //高光
-            o.Smoothness = specular.a; //光泽度
-            o.Normal = UnpackNormal(tex2D(_Normal, IN.uv_MainTex)); //法线
-            o.Occlusion = tex2D(_AO, IN.uv_MainTex); //AO
+            half4 specular = tex2D(_Specular, input.uv_MainTex);
+            output.Specular = specular.rgb; //高光
+            output.Smoothness = specular.a; //光泽度
+            output.Normal = UnpackNormal(tex2D(_Normal, input.uv_MainTex)); //法线
+            output.Occlusion = tex2D(_AO, input.uv_MainTex); //AO
         }
         ENDCG
     }
