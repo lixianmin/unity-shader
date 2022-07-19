@@ -94,25 +94,34 @@ Shader "basics/05.standard"
             return output;
         }
 
+        // N    normalWS
+        // L    lightDirWS
+        // V    viewDirWS
+        // H    normalize(N+V)
         half4 inner_frag(Varyings input, half using_ambient)
         {
             float3 positionWS = float4(input.T2W0.w, input.T2W1.w, input.T2W2.w, 1);
-            half3 lightDirWS = normalize(UnityWorldSpaceLightDir(positionWS));
-            half3 viewDirWS = normalize(UnityWorldSpaceViewDir(positionWS)); 
+            half3 L = normalize(UnityWorldSpaceLightDir(positionWS));
+            half3 V = normalize(UnityWorldSpaceViewDir(positionWS)); 
             
             // Unity标准库中定义了两个功能相同的方法 UnpackNormalWithScale(UnityCG.cginc)与UnpackScaleNormal(UnityStandardUtils.cginc)
             half3 bump = UnpackNormalWithScale(tex2D(_Normal, input.texcoord.xy), _Bumpiness);
-            half3 normalWS = normalize(half3(dot(input.T2W0.xyz, bump), dot(input.T2W1.xyz, bump), dot(input.T2W2.xyz, bump)));
+            half3 N = normalize(half3(dot(input.T2W0.xyz, bump), dot(input.T2W1.xyz, bump), dot(input.T2W2.xyz, bump)));
+
+            // 计算光照相关参数 https://developer.download.nvidia.cn/cg/lit.html
+            // float4 lit(float NdotL, float NdotH, float m)
+            // {
+            //   float specular = (NdotL > 0) ? pow(max(0.0, NdotH), m);
+            //   return float4(1.0, max(0.0, NdotL), specular, 1.0);
+            // }
+            half4 lighting = lit(dot(N, L), dot(N, normalize(L+V)), _Gloss * 128.0); 
 
             // diffuse: NL
             half4 albedo = _Color * tex2D(_MainTex, input.texcoord);
-            half NL = dot(normalWS, lightDirWS);
-            half4 diffuse = _LightColor0 * albedo * saturate(NL);
+            half4 diffuse = _LightColor0 * albedo * lighting.y;
 
             // specuarl: NH
-            half3 H = normalize(lightDirWS + viewDirWS);
-            half NH = dot(normalWS, H);
-            half4 specular = _LightColor0 * _Specular * pow(saturate(NH), _Gloss * 128);
+            half4 specular = _LightColor0 * _Specular * lighting.z;
             
             // 环境光: Window->Rendering->Lighting->Environment->Source->Gradient
             half4 color = using_ambient * unity_AmbientSky * albedo;
@@ -121,7 +130,7 @@ Shader "basics/05.standard"
             // 补4个点光源
             lightShade.rgb += Shade4PointLights(unity_4LightPosX0, unity_4LightPosY0, unity_4LightPosZ0,
                         unity_LightColor[0].rgb, unity_LightColor[1].rgb, unity_LightColor[2].rgb, unity_LightColor[4].rgb,
-                        unity_4LightAtten0, positionWS.rgb, normalWS) * _Color;
+                        unity_4LightAtten0, positionWS.rgb, N) * _Color;
 
             // 使用预定义宏计算阴影系数
             UNITY_LIGHT_ATTENUATION(shadowmask, input, positionWS.rgb)
