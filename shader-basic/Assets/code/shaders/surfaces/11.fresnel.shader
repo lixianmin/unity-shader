@@ -24,6 +24,7 @@ Shader "surfaces/11.fresnel"
         [Space(10)]
         [Toggle(ENABLE_FRESNEL)] _EableFresnel("Enable Fresnel", Int) = 1
         _FresnelScale("Fresnel Scale", Range(0, 1))	= 0.5
+        // _FresnelColor("Fresnel Color", Color) = (1,1,1,1)
 		[NoScaleOffset]_FresnelCubemap("Fresnel Cubemap", Cube) = "_Skybox" {}
 	}
 
@@ -34,7 +35,7 @@ Shader "surfaces/11.fresnel"
 
 		CGPROGRAM
 		#pragma target 3.0
-		#pragma surface surf Standard fullforwardshadows
+		#pragma surface surf Standard fullforwardshadows // alpha:blend 
         #pragma shader_feature_local ENABLE_FRESNEL
 
 		struct Input
@@ -61,6 +62,7 @@ Shader "surfaces/11.fresnel"
 		half 		_Metallic;
 
         half        _FresnelScale;
+        // half3       _FresnelColor;
         samplerCUBE _FresnelCubemap;
 		
 		// // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
@@ -101,14 +103,14 @@ Shader "surfaces/11.fresnel"
             #ifdef ENABLE_FRESNEL
                 half3 reflectionWS = WorldReflectionVector(input, output.Normal);
                 half3 reflectColor = texCUBE(_FresnelCubemap, reflectionWS).rgb;
-                half3 lightDirWS = normalize(UnityWorldSpaceLightDir(input.worldPos));
+                half3 normalWS = WorldNormalVector(input, output.Normal);
                 half3 viewDirWS = WorldNormalVector(input, input.viewDir);
 
                 half fresnelScale = _FresnelScale;
                 // fresnelScale = lerp(_FresnelScale, c.r, _Metallic);
-                half fresnel = fresnelScale + (1 - fresnelScale) * pow5(1 - dot(viewDirWS, lightDirWS));
-                // output.Albedo = lerp(c.rgb, reflectColor, saturate(fresnel));
-                output.Albedo = c.rgb + reflectColor*saturate(fresnel);    // 模拟边缘光照
+                half fresnel = fresnelScale + (1 - fresnelScale) * pow5(1 - dot(viewDirWS, normalWS));
+                output.Emission = lerp(c.rgb, reflectColor, saturate(fresnel));
+                // output.Emission += reflectColor * saturate(fresnel);    // 模拟边缘光照
             #endif
 		}
 
