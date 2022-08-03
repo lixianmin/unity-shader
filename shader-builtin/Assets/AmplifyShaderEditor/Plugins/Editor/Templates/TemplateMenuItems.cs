@@ -51,10 +51,5 @@ namespace AmplifyShaderEditor
 		{
 			AmplifyShaderEditorWindow.CreateConfirmationTemplateShader( "ed95fe726fd7b4644bb42f4d1ddd2bcd" );
 		}
-		[MenuItem( "Assets/Create/Amplify Shader/Legacy/Unlit Alpha Blend", false, 85 )]
-		public static void ApplyTemplateLegacyUnlitAlphaBlend()
-		{
-			AmplifyShaderEditorWindow.CreateConfirmationTemplateShader( "7b85a9f5596c2458ca0261ce0adfd54d" );
-		}
 	}
 }
