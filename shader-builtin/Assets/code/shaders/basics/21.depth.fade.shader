@@ -23,7 +23,7 @@ Shader "21.depth.fade"
 		ENDCG
 		Blend SrcAlpha OneMinusSrcAlpha
 		AlphaToMask Off
-		Cull Back
+		Cull Off
 		ColorMask RGBA
 		ZWrite Off
 		ZTest LEqual
@@ -132,24 +132,24 @@ Shader "21.depth.fade"
 }
 /*ASEBEGIN
 Version=18935
--272;-1035;1920;1014;1358.853;420.1083;1.137542;True;True
+-254;-1035;1920;1014;1358.853;420.1083;1.137542;True;False
 Node;AmplifyShaderEditor.ScreenPosInputsNode;21;-856.0597,224.8782;Float;False;0;False;0;5;FLOAT4;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.RangedFloatNode;4;-779.0999,-78.17059;Inherit;False;Property;_Distance;_Distance;0;0;Create;True;0;0;0;False;0;False;0.2;0.457;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;4;-779.0999,-78.17059;Inherit;False;Property;_Distance;_Distance;0;0;Create;True;0;0;0;False;0;False;0.2;0.704;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.ComponentMaskNode;22;-634.239,223.7406;Inherit;False;True;True;False;False;1;0;FLOAT4;0,0,0,0;False;1;FLOAT2;0
 Node;AmplifyShaderEditor.Vector2Node;23;-608.0756,378.4464;Inherit;False;Property;_Resolution;Resolution;3;0;Create;True;0;0;0;False;0;False;16,9;16,9;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
-Node;AmplifyShaderEditor.DepthFade;9;-457.4677,-96.9882;Inherit;False;True;True;True;2;1;FLOAT3;0,0,0;False;0;FLOAT;1;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;24;-393.0801,309.0563;Inherit;False;2;2;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.OneMinusNode;15;-100.2325,-94.21329;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.DepthFade;9;-457.4677,-96.9882;Inherit;False;True;True;True;2;1;FLOAT3;0,0,0;False;0;FLOAT;1;False;1;FLOAT;0
+Node;AmplifyShaderEditor.OneMinusNode;15;-134.3588,-97.62592;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.ColorNode;17;-182.6348,53.10925;Inherit;False;Property;_TintColor;TintColor;1;1;[HDR];Create;True;0;0;0;False;0;False;0,0,0,0;19.57417,1.950163,0,1;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.SamplerNode;20;-190.5977,254.4543;Inherit;True;Property;_MainTex;MainTex;2;1;[NoScaleOffset];Create;True;0;0;0;False;0;False;-1;None;4d073e2b125c94410bebf40d4fdcf75c;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.SamplerNode;20;-190.5977,254.4543;Inherit;True;Property;_MainTex;MainTex;2;1;[NoScaleOffset];Create;True;0;0;0;False;0;False;-1;None;None;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;7;145.2275,1.460685;Inherit;True;3;3;0;FLOAT;0;False;1;COLOR;0,0,0,0;False;2;COLOR;0,0,0,0;False;1;COLOR;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;18;454.3398,-7.727513;Float;False;True;-1;2;ASEMaterialInspector;100;1;21.depth.fade;0770190933193b94aaa3065e307002fa;True;Unlit;0;0;Unlit;2;True;True;2;5;False;-1;10;False;-1;0;1;False;-1;0;False;-1;True;0;False;-1;0;False;-1;False;False;False;False;False;False;False;False;False;True;0;False;-1;False;True;0;False;-1;False;True;True;True;True;True;0;False;-1;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;True;True;2;False;-1;True;3;False;-1;True;True;0;False;-1;0;False;-1;True;2;RenderType=Transparent=RenderType;Queue=Transparent=Queue=0;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;1;Vertex Position,InvertActionOnDeselection;1;0;0;1;True;False;;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;18;454.3398,-7.727513;Float;False;True;-1;2;ASEMaterialInspector;100;1;21.depth.fade;0770190933193b94aaa3065e307002fa;True;Unlit;0;0;Unlit;2;True;True;2;5;False;-1;10;False;-1;0;1;False;-1;0;False;-1;True;0;False;-1;0;False;-1;False;False;False;False;False;False;False;False;False;True;0;False;-1;True;True;2;False;-1;False;True;True;True;True;True;0;False;-1;False;False;False;False;False;False;False;True;False;255;False;-1;255;False;-1;255;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;7;False;-1;1;False;-1;1;False;-1;1;False;-1;True;True;2;False;-1;True;3;False;-1;True;True;0;False;-1;0;False;-1;True;2;RenderType=Transparent=RenderType;Queue=Transparent=Queue=0;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;1;Vertex Position,InvertActionOnDeselection;1;0;0;1;True;False;;False;0
 Node;AmplifyShaderEditor.CommentaryNode;26;-678.6033,-260.8524;Inherit;False;313.8579;103.4126;https://www.bilibili.com/video/BV1CS4y1u7xD/?spm_id_from=333.788&vd_source=060cae0323076afc7bb35d1220dc6cf7;0;android平台depth fade不起作用;0.8962264,0.1479619,0.1479619,1;0;0
 Node;AmplifyShaderEditor.CommentaryNode;25;-1359.991,-443.9967;Inherit;False;100;100;c;0;;1,1,1,1;0;0
 WireConnection;22;0;21;0
-WireConnection;9;0;4;0
 WireConnection;24;0;22;0
 WireConnection;24;1;23;0
+WireConnection;9;0;4;0
 WireConnection;15;0;9;0
 WireConnection;20;1;24;0
 WireConnection;7;0;15;0
@@ -157,4 +157,4 @@ WireConnection;7;1;17;0
 WireConnection;7;2;20;0
 WireConnection;18;0;7;0
 ASEEND*/
-//CHKSM=49D99C73BCA3A60BF2E85D7F171995B7AC673703
+//CHKSM=10198E45FD5209B1FEE3F7CD07394AEE41BA2CC6
