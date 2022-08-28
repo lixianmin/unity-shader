@@ -76,8 +76,8 @@ public class MBProjectDecal : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawSphere(transform.position, size * 0.05f);
-
-        Gizmos.color = Color.white;
-        Gizmos.DrawWireMesh(meshFilter.sharedMesh, viewBox.position, viewBox.rotation, viewBox.localScale);
+        
+        // Gizmos.color = Color.green;
+        // Gizmos.DrawWireMesh(meshFilter.sharedMesh, viewBox.position, viewBox.rotation, viewBox.localScale);
     }
 }

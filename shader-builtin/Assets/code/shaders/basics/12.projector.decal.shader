@@ -3,6 +3,7 @@
 created:	2022-07-27
 author:		lixianmin
 
+https://www.bilibili.com/video/BV1AY411n7TG?spm_id_from=333.999.0.0&vd_source=060cae0323076afc7bb35d1220dc6cf7
 https://blog.csdn.net/derbi123123/article/details/123560062
 
 Copyright(C) - All Rights Reserved
@@ -26,7 +27,7 @@ Shader "basics/12.projector.decal"
 
 		Blend SrcAlpha OneMinusSrcAlpha
         ZWrite Off
-		Cull Off
+		Cull Back
 
         Pass
         {
